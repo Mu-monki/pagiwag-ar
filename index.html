@@ -5,17 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>PAG-IWAG AR — UP NCPAG GRIT Labs</title>
 
-  <!-- Editorial & Geometric Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
-  <!-- Modular Stylesheets -->
   <link rel="stylesheet" href="css/theme.css" />
   <link rel="stylesheet" href="css/splash.css" />
   <link rel="stylesheet" href="css/components.css" />
 
-  <!-- Intercept native alert() before AR.js initializes -->
   <script>
     window.__originalAlert = window.alert;
     window.__arAlerts = [];
@@ -25,14 +22,10 @@
     };
   </script>
 
-  <!-- A-Frame & AR.js Libraries -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
-  <!-- =========================================================
-       SPLASH SCREEN (Functional Background Asset Preloader)
-       ========================================================= -->
   <section id="splash-screen" class="splash-screen" aria-label="PAG-IWAG AR Asset Loader">
     <div class="weave-border weave-border--top" aria-hidden="true"></div>
 
@@ -50,7 +43,6 @@
       </header>
 
       <div class="splash-hero">
-        <!-- Animated Oblation Torch Emblem -->
         <div class="torch-emblem" aria-hidden="true">
           <svg viewBox="0 0 120 150" class="torch-svg">
             <defs>
@@ -60,14 +52,10 @@
                 <stop offset="100%" stop-color="#FFE07D" />
               </linearGradient>
             </defs>
-            <!-- Outer Flame -->
             <path class="flame-outer" d="M60 8 C78 32, 98 52, 92 78 C87 96, 74 104, 60 104 C46 104, 33 96, 28 78 C22 52, 42 32, 60 8 Z" fill="url(#flameGrad)" />
-            <!-- Inner Flame -->
             <path class="flame-inner" d="M60 28 C71 45, 81 58, 77 75 C74 87, 67 93, 60 93 C53 93, 46 87, 43 75 C39 58, 49 45, 60 28 Z" fill="#FFF3C4" opacity="0.85" />
-            <!-- Oblation Silhouette -->
             <circle cx="60" cy="54" r="4.5" fill="#F6A821" />
             <path d="M44 62 L56 64 L56 86 L64 86 L64 64 L76 62 L75 59 L60 61 L45 59 Z" fill="#F6A821" />
-            <!-- Fluted UP Pedestal -->
             <rect x="34" y="106" width="52" height="7" rx="2" fill="#1B4988" />
             <rect x="39" y="115" width="42" height="24" rx="2" fill="#1B4988" />
             <line x1="48" y1="118" x2="48" y2="136" stroke="#F7F4EB" stroke-width="3" stroke-linecap="round" />
@@ -86,7 +74,6 @@
         </div>
       </div>
 
-      <!-- Functional Asset Preloader Card -->
       <div class="loader-card">
         <div class="loader-header">
           <span id="loader-status-text" class="loader-status">Initializing asset pipeline...</span>
@@ -97,7 +84,6 @@
           <div id="loader-bar-fill" class="loader-bar-fill"></div>
         </div>
 
-        <!-- 4 Sticker Compilation Badges -->
         <div class="asset-checklist" id="asset-checklist">
           <div class="asset-chip" data-asset="pagtanow">
             <span class="chip-dot"></span>
@@ -118,7 +104,6 @@
         </div>
       </div>
 
-      <!-- Launch Action Controls -->
       <div class="splash-actions">
         <button id="btn-launch-ar" class="btn btn-primary" disabled>
           <span class="btn-icon">📷</span>
@@ -143,11 +128,7 @@
     <div class="weave-border weave-border--bottom" aria-hidden="true"></div>
   </section>
 
-  <!-- =========================================================
-       MAIN AR / 3D EXPERIENCE VIEWPORT
-       ========================================================= -->
   <main id="ar-workspace" class="ar-workspace hidden">
-    <!-- Top HUD Bar -->
     <header class="ar-hud-top">
       <div class="hud-brand">
         <button id="btn-back-splash" class="hud-icon-btn" title="Back to Splash">←</button>
@@ -163,16 +144,13 @@
       </div>
     </header>
 
-    <!-- Diagnostic / Fallback Notice Banner -->
     <div id="diagnostic-banner" class="diagnostic-banner hidden" role="status">
       <span id="diagnostic-text">Camera unavailable — running Interactive 3D Sticker Simulator.</span>
       <button id="btn-dismiss-banner" aria-label="Dismiss notice">✕</button>
     </div>
 
-    <!-- Container where A-Frame Live AR Scene OR 3D Simulator Canvas mounts -->
     <div id="scene-mount" class="scene-mount"></div>
 
-    <!-- Scanning Reticle (Shown in Live Camera mode when no marker is locked) -->
     <div id="scan-reticle" class="scan-reticle">
       <div class="reticle-frame">
         <span class="corner tl"></span>
@@ -183,7 +161,6 @@
       <p class="reticle-hint">Point camera at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker</p>
     </div>
 
-    <!-- Simulator Quick Sticker Switcher (Visible in 3D Simulator mode) -->
     <nav id="sim-sticker-bar" class="sim-sticker-bar hidden" aria-label="Select Sticker Marker">
       <button class="sim-tab active" data-marker="pagtanow">🔮 PagtaNOW</button>
       <button class="sim-tab" data-marker="talampad">⚖️ TALAMPAD</button>
@@ -191,7 +168,6 @@
       <button class="sim-tab" data-marker="kabataan">🔥 Lingkod Bayani</button>
     </nav>
 
-    <!-- Interactive Capacity Development Activity Drawer -->
     <aside id="activity-drawer" class="activity-drawer collapsed" aria-live="polite">
       <div class="drawer-handle-row" id="drawer-toggle-bar">
         <div class="drawer-pill"></div>
@@ -210,9 +186,6 @@
     </aside>
   </main>
 
-  <!-- =========================================================
-       PRINTABLE STICKER MARKER KIT MODAL
-       ========================================================= -->
   <div id="kit-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="kit-modal-title">
     <div class="modal-card">
       <div class="weave-border weave-border--top" aria-hidden="true"></div>
@@ -238,7 +211,6 @@
     </div>
   </div>
 
-  <!-- Main Application Entry Point -->
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
