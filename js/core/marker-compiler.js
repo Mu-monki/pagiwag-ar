@@ -257,17 +257,12 @@ function encodePattFromCanvas(sourceCanvas, innerOffset, innerSize) {
           .map((row) =>
             row.map((px) => String(px[ch]).padStart(3, ' ')).join(' ')
           )
-          .join('
-')
+          .join('\n')
       )
-      .join('
-');
+      .join('\n');
   });
 
-  return blocks.join('
-
-') + '
-';
+  return blocks.join('\n\n') + '\n';
 }
 
 /**
