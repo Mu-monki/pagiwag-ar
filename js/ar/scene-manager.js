@@ -2,6 +2,7 @@
  * MindAR Image Tracking Scene Manager & Interactive No-Camera 3D Simulator
  */
 
+import { MINDAR_CONFIG } from '../config/activities-data.js';
 import { buildHologramEntity } from './holograms.js';
 import { audioFX } from '../core/audio-fx.js';
 
@@ -79,9 +80,14 @@ export class SceneManager {
     document.body.classList.add('ar-live-mode');
 
     const scene = document.createElement('a-scene');
+    const minCF = MINDAR_CONFIG.filterMinCF ?? 0.0001;
+    const beta = MINDAR_CONFIG.filterBeta ?? 0.001;
+    const warmup = MINDAR_CONFIG.warmupTolerance ?? 5;
+    const miss = MINDAR_CONFIG.missTolerance ?? 10;
+
     scene.setAttribute(
       'mindar-image',
-      `imageTargetSrc: ${compiledBundle.resolvedMindUrl}; maxTrack: ${compiledBundle.maxTrack}; uiLoading: no; uiScanning: no; uiError: no;`
+      `imageTargetSrc: ${compiledBundle.resolvedMindUrl}; maxTrack: ${compiledBundle.maxTrack}; filterMinCF: ${minCF}; filterBeta: ${beta}; warmupTolerance: ${warmup}; missTolerance: ${miss}; uiLoading: no; uiScanning: no; uiError: no;`
     );
     scene.setAttribute('color-space', 'sRGB');
     scene.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights, alpha: true');

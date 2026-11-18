@@ -20,7 +20,12 @@
 
 export const MINDAR_CONFIG = {
   targetSrc: './marker_patterns/stickers.mind',
-  maxTrack: 2,
+  maxTrack: 1,
+  // Lower values damp handheld jitter; raise filterBeta slightly if motion feels laggy
+  filterMinCF: 0.0001,
+  filterBeta: 0.001,
+  warmupTolerance: 5,
+  missTolerance: 10,
 };
 
 export const STICKER_MARKERS = [
