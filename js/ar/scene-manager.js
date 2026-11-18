@@ -6,13 +6,16 @@ import { buildHologramEntity } from './holograms.js';
 import { audioFX } from '../core/audio-fx.js';
 
 export class SceneManager {
-  constructor({ mountEl, onMarkerDetected, onMarkerLost }) {
+  constructor({ mountEl, onMarkerDetected, onMarkerLost, onCameraReady, onCameraError }) {
     this.mountEl = mountEl;
     this.onMarkerDetected = onMarkerDetected;
     this.onMarkerLost = onMarkerLost;
+    this.onCameraReady = onCameraReady;
+    this.onCameraError = onCameraError;
     this.mode = null; // 'live' | 'sim'
     this.activeSimMarker = 'pagtanow';
     this.compiledAssets = null;
+    this.videoWatchdog = null;
     this.orbitState = {
       isDragging: false,
       lastX: 0,
@@ -23,6 +26,14 @@ export class SceneManager {
   }
 
   clearScene() {
+    if (this.videoWatchdog) {
+      clearTimeout(this.videoWatchdog);
+      this.videoWatchdog = null;
+    }
+
+    document.documentElement.classList.remove('ar-live-mode');
+    document.body.classList.remove('ar-live-mode');
+
     // Stop any lingering video streams created by AR.js
     const videos = document.querySelectorAll('video');
     videos.forEach((v) => {
@@ -35,12 +46,16 @@ export class SceneManager {
   }
 
   /**
-   * Mounts Live AR.js Webcam Scene with all 4 custom .patt markers
+   * Mounts Live AR.js Webcam Scene with transparent WebGL canvas & all 4 custom .patt markers
    */
   mountLiveAR(compiledAssets) {
     this.compiledAssets = compiledAssets;
     this.clearScene();
     this.mode = 'live';
+
+    // Ensure html, body, workspace & WebGL canvas stay transparent so #arjs-video is visible
+    document.documentElement.classList.add('ar-live-mode');
+    document.body.classList.add('ar-live-mode');
 
     const scene = document.createElement('a-scene');
     scene.setAttribute('embedded', '');
@@ -49,7 +64,10 @@ export class SceneManager {
       'sourceType: webcam; debugUIEnabled: false; detectionMode: mono; patternRatio: 0.70;'
     );
     scene.setAttribute('vr-mode-ui', 'enabled: false');
-    scene.setAttribute('renderer', 'logarithmicDepthBuffer: true; antialias: true;');
+    scene.setAttribute(
+      'renderer',
+      'alpha: true; antialias: true; logarithmicDepthBuffer: true; colorManagement: true;'
+    );
 
     Object.values(compiledAssets).forEach((asset) => {
       const marker = document.createElement('a-marker');
@@ -78,7 +96,53 @@ export class SceneManager {
     cam.setAttribute('camera', '');
     scene.appendChild(cam);
 
+    const handleVideoReady = () => {
+      if (this.mode !== 'live') return;
+      if (this.videoWatchdog) {
+        clearTimeout(this.videoWatchdog);
+        this.videoWatchdog = null;
+      }
+      // Force AR.js to recalculate viewport dimensions once video stream attaches
+      window.dispatchEvent(new Event('resize'));
+      if (this.onCameraReady) this.onCameraReady();
+    };
+
+    const handleCameraFailure = (detailMsg) => {
+      if (this.mode !== 'live') return;
+      if (this.videoWatchdog) {
+        clearTimeout(this.videoWatchdog);
+        this.videoWatchdog = null;
+      }
+      if (this.onCameraError) {
+        this.onCameraError(
+          detailMsg || 'Camera permission denied or unavailable — switched to Interactive 3D Simulator.'
+        );
+      }
+    };
+
+    window.addEventListener('arjs-video-loaded', handleVideoReady, { once: true });
+    scene.addEventListener('camera-error', () => handleCameraFailure(), { once: true });
+    window.addEventListener(
+      'pagiwag:ar-alert',
+      (e) => {
+        if (this.mode === 'live' && /webcam|camera|permission|media/i.test(e.detail)) {
+          handleCameraFailure(e.detail);
+        }
+      },
+      { once: true }
+    );
+
     this.mountEl.appendChild(scene);
+
+    // Watchdog: verify an active <video> stream appears within 8 seconds
+    this.videoWatchdog = setTimeout(() => {
+      const vid = document.getElementById('arjs-video') || document.querySelector('video');
+      if (vid && vid.srcObject && vid.readyState >= 2) {
+        handleVideoReady();
+      } else {
+        handleCameraFailure('Camera stream did not start in time — switched to Interactive 3D Simulator.');
+      }
+    }, 8000);
   }
 
   /**

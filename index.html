@@ -8,18 +8,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
 
   <link rel="stylesheet" href="css/theme.css" />
   <link rel="stylesheet" href="css/splash.css" />
   <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
 
   <script>
     window.__originalAlert = window.alert;
     window.__arAlerts = [];
     window.alert = function (msg) {
-      window.__arAlerts.push(String(msg));
-      console.info("[PAG-IWAG AR Notice]", msg);
+      const text = String(msg);
+      window.__arAlerts.push(text);
+      console.info("[PAG-IWAG AR Notice]", text);
+      window.dispatchEvent(new CustomEvent("pagiwag:ar-alert", { detail: text }));
     };
   </script>
 
@@ -53,10 +55,14 @@
                 <stop offset="100%" stop-color="#FFE07D" />
               </linearGradient>
             </defs>
+            <!-- Outer Flame -->
             <path class="flame-outer" d="M60 8 C78 32, 98 52, 92 78 C87 96, 74 104, 60 104 C46 104, 33 96, 28 78 C22 52, 42 32, 60 8 Z" fill="url(#flameGrad)" />
+            <!-- Inner Flame -->
             <path class="flame-inner" d="M60 28 C71 45, 81 58, 77 75 C74 87, 67 93, 60 93 C53 93, 46 87, 43 75 C39 58, 49 45, 60 28 Z" fill="#FFF3C4" opacity="0.85" />
+            <!-- Oblation Silhouette -->
             <circle cx="60" cy="54" r="4.5" fill="#F6A821" />
             <path d="M44 62 L56 64 L56 86 L64 86 L64 64 L76 62 L75 59 L60 61 L45 59 Z" fill="#F6A821" />
+            <!-- Fluted UP Pedestal -->
             <rect x="34" y="106" width="52" height="7" rx="2" fill="#1B4988" />
             <rect x="39" y="115" width="42" height="24" rx="2" fill="#1B4988" />
             <line x1="48" y1="118" x2="48" y2="136" stroke="#F7F4EB" stroke-width="3" stroke-linecap="round" />
@@ -107,8 +113,7 @@
 
       <div class="splash-actions">
         <button id="btn-launch-ar" class="btn btn-primary" disabled>
-          <!-- <span class="btn-icon">📷</span> -->
-           <span class="btn-icon"><i class="fa-solid fa-camera"></i></span>
+          <span class="btn-icon"><i class="fa-solid fa-camera"></i></span>
           <span>Launch PAG-IWAG AR</span>
         </button>
 
@@ -160,7 +165,7 @@
         <span class="corner bl"></span>
         <span class="corner br"></span>
       </div>
-      <p class="reticle-hint">Point camera at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker</p>
+      <p class="reticle-hint" id="reticle-hint-text">Starting camera feed… Point at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker</p>
     </div>
 
     <nav id="sim-sticker-bar" class="sim-sticker-bar hidden" aria-label="Select Sticker Marker">

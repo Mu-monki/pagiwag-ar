@@ -3,7 +3,7 @@
  */
 
 import { compileAllStickerAssets } from './core/marker-compiler.js';
-import { runCameraPreflight } from './core/camera-preflight.js';
+import { checkCameraEnvironment } from './core/camera-preflight.js';
 import { audioFX } from './core/audio-fx.js';
 import { SceneManager } from './ar/scene-manager.js';
 import { ActivityDrawer } from './ui/activity-drawer.js';
@@ -13,7 +13,6 @@ import {
 } from './ui/marker-exporter.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('TEST')
   // Splash Screen Elements
   const splashScreen = document.getElementById('splash-screen');
   const statusText = document.getElementById('loader-status-text');
@@ -38,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnDismissBanner = document.getElementById('btn-dismiss-banner');
 
   const scanReticle = document.getElementById('scan-reticle');
+  const reticleHintText = document.getElementById('reticle-hint-text');
   const simStickerBar = document.getElementById('sim-sticker-bar');
 
   // Kit Modal Elements
@@ -96,6 +96,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         scanReticle.classList.remove('hidden');
       }
     },
+    onCameraReady: () => {
+      if (reticleHintText) {
+        reticleHintText.innerHTML =
+          'Point camera at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker';
+      }
+    },
+    onCameraError: (reason) => {
+      enterSimulatorMode(reason);
+    },
   });
 
   activityDrawer = new ActivityDrawer({
@@ -108,10 +117,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 3. Mode Launchers
   function enterLiveMode() {
+    const env = checkCameraEnvironment();
+    if (!env.supported) {
+      enterSimulatorMode(env.reason);
+      return;
+    }
+
+    hideDiagnostic();
     splashScreen.classList.add('hidden');
     workspace.classList.remove('hidden');
     simStickerBar.classList.add('hidden');
     scanReticle.classList.remove('hidden');
+
+    if (reticleHintText) {
+      reticleHintText.innerHTML =
+        'Starting camera feed… Point at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker';
+    }
 
     hudModeBadge.textContent = 'LIVE CAMERA';
     hudModeBadge.className = 'hud-badge hud-badge--live';
@@ -139,23 +160,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     sceneManager.mountSimulator(compiledAssets, 'pagtanow');
   }
 
-  // Launch Live AR with 4-second camera preflight check
-  btnLaunchAR.addEventListener('click', async () => {
+  // Launch Live AR directly inside the user click gesture
+  btnLaunchAR.addEventListener('click', () => {
     audioFX.playActionTap();
-    btnLaunchAR.disabled = true;
-    btnLaunchAR.querySelector('span:last-child').textContent = 'Checking Camera...';
-
-    const check = await runCameraPreflight(4000);
-
-    btnLaunchAR.disabled = false;
-    btnLaunchAR.querySelector('span:last-child').textContent = 'Launch PAG-IWAG AR';
-
-    if (check.supported) {
-      hideDiagnostic();
-      enterLiveMode();
-    } else {
-      enterSimulatorMode(check.reason);
-    }
+    enterLiveMode();
   });
 
   btnLaunchSim.addEventListener('click', () => {
@@ -163,18 +171,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     enterSimulatorMode();
   });
 
-  btnToggleMode.addEventListener('click', async () => {
+  btnToggleMode.addEventListener('click', () => {
     audioFX.playActionTap();
     if (sceneManager.mode === 'live') {
       enterSimulatorMode();
     } else {
-      const check = await runCameraPreflight(4000);
-      if (check.supported) {
-        hideDiagnostic();
-        enterLiveMode();
-      } else {
-        showDiagnostic(check.reason);
-      }
+      enterLiveMode();
     }
   });
 

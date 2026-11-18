@@ -39,7 +39,7 @@ function drawStickerIllustration(ctx, id, x, y, size) {
     ctx.arc(cx, cy - 4, size * 0.21, Math.PI, 0);
     ctx.fill();
 
-    // Stylized green hills inside globe
+    // Stylized blue hills inside globe
     ctx.fillStyle = '#1B4988';
     ctx.beginPath();
     ctx.arc(cx, cy + 16, size * 0.23, 0, Math.PI);

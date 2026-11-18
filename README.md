@@ -12,13 +12,13 @@ pag-iwag-ar/
 ├── css/
 │   ├── theme.css               # PAG-IWAG color tokens, editorial fonts & geometric weave borders
 │   ├── splash.css              # Asset-loading splash screen & animated Oblation torch
-│   └── components.css          # AR scanner HUD, bottom activity drawers, 3D simulator & kit modal
+│   └── components.css          # Transparent AR camera layer, HUD, activity drawers & kit modal
 └── js/
     ├── config/
     │   └── activities-data.js  # Sticker metadata, PagtaNOW cards, TALAMPAD dilemmas & die prompts
     ├── core/
     │   ├── marker-compiler.js  # Offscreen canvas sticker art & inline AR.js .patt data URI generator
-    │   ├── camera-preflight.js # 4-second getUserMedia probe & sandbox fallback handler
+    │   ├── camera-preflight.js # HTTPS / getUserMedia environment validator
     │   └── audio-fx.js         # Web Audio API chimes & interaction feedback
     ├── ar/
     │   ├── scene-manager.js    # Dynamic <a-scene> / <a-marker> setup & 3D simulator orbit controls
@@ -34,12 +34,8 @@ pag-iwag-ar/
 Because the application uses native ES Modules (`<script type="module">`) and browser camera APIs (`getUserMedia`), serve the folder over HTTP or HTTPS rather than opening `index.html` directly via `file://`:
 
 ```bash
-# Option 1: Python built-in HTTP server
 cd pag-iwag-ar
 python3 -m http.server 8080
-
-# Option 2: Node.js / npx serve
-npx serve pag-iwag-ar
 ```
 
 Then open `http://localhost:8080` in your browser.
