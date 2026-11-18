@@ -13,6 +13,7 @@ import {
 } from './ui/marker-exporter.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('TEST')
   // Splash Screen Elements
   const splashScreen = document.getElementById('splash-screen');
   const statusText = document.getElementById('loader-status-text');
