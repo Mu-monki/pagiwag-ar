@@ -1,7 +1,5 @@
 /**
  * Non-Destructive Camera Environment Check
- * Avoids opening/closing a temporary MediaStream before AR.js claims the camera
- * (which causes hardware lock race conditions on Android Chrome & iOS Safari).
  */
 
 export function checkCameraEnvironment() {

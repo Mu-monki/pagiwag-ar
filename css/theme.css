@@ -45,7 +45,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Keep document transparent while AR.js live webcam video renders behind canvas */
+/* Keep document transparent while MindAR live webcam video renders behind canvas */
 html.ar-live-mode,
 body.ar-live-mode {
   background: transparent !important;

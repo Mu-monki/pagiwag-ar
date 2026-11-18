@@ -1,191 +1,169 @@
 /**
- * PAG-IWAG 2026 — Capacity Development Activities & Sticker Definitions
- * UP NCPAG Governance Reform, Innovation and Transformation Research Collaboratories (GRIT Labs)
+ * PAG-IWAG 2026 — MindAR Image Target, 3D Model & Sticker Metadata Registry
+ *
+ * HOW TO COMPILE & PAIR YOUR TEAMMATES' BORDERLESS STICKERS + 3D MODELS:
+ * 1. Open the MindAR Image Target Compiler in your browser:
+ *    https://hiukim.github.io/mind-ar-js-doc/tools/compile
+ * 2. Drag & drop all borderless sticker PNGs in the exact `targetIndex` order below
+ *    (0: pagtanow, 1: talampad, 2: gameon, 3: kabataan, ...), click Start, and download
+ *    the single compiled file as:
+ *    `marker_patterns/stickers.mind`
+ * 3. Place each sticker's borderless artwork in `marker_patterns/<id>.png`
+ * 4. Place each teammate's 3D model in `output_models/<id>.glb`
+ *
+ * COORDINATE SYSTEM NOTES:
+ * - MindAR places (0, 0, 0) at the CENTER of each sticker where 1 unit = sticker width
+ *   (+X right, +Y up along the sticker, +Z out toward the camera).
+ *   `arRotation: '90 0 0'` stands a standard Y-up .glb model upright off the sticker face.
+ * - The 3D Simulator uses normalized centered tabletop coordinates (`simScale`, `simPosition`).
  */
+
+export const MINDAR_CONFIG = {
+  targetSrc: './marker_patterns/stickers.mind',
+  maxTrack: 2,
+};
 
 export const STICKER_MARKERS = [
   {
     id: 'pagtanow',
+    targetIndex: 0,
+    icon: '🔮',
     name: 'PagtaNOW: Sense the Future',
     shortLabel: 'PagtaNOW',
-    category: 'CAPACITY DEV 01 • FUTURES SENSING GAME',
+    category: 'CAPACITY DEV 01 • FUTURES SENSING',
     tagline: 'Peering into the Future of Philippine Governance',
     accentColor: '#2B7A78',
     secondaryColor: '#F6A821',
+
+    stickerImageUrl: './marker_patterns/pagtanow.png',
+    modelUrl: './output_models/rizalexport.glb',
+
+    // Live MindAR centered coordinates (1 unit = sticker width, +Z out toward viewer)
+    arScale: '0.5 0.5 0.5',
+    arPosition: '0 0 0.05',
+    arRotation: '90 0 0',
+
+    // 3D Simulator normalized tabletop coordinates
+    simScale: '0.5 0.5 0.5',
+    simPosition: '0 0.05 0',
+    simRotation: '0 0 0',
+    autoSpin: false,
+
     description:
-      'PagtaNOW trains student leaders and local bureaucrats to spot weak signals of change before crises strike. Select a future horizon and inspect a PagtaNOW Foresight Arch Card.',
+      'PagtaNOW trains student leaders and local bureaucrats to spot weak signals of change before crises strike across Philippine communities.',
   },
   {
     id: 'talampad',
-    name: 'TALAMPAD: Choose Accountability!',
+    targetIndex: 1,
+    icon: '⚖️',
+    name: 'TALAMPAD: Principled Accountability',
     shortLabel: 'TALAMPAD',
-    category: 'CAPACITY DEV 02 • DECISION-MAKING LAB',
+    category: 'CAPACITY DEV 02 • INTEGRITY & LEADERSHIP',
     tagline: 'Tracing Accountability: Leadership, Administration & Management through Principled Actions & Decisions',
     accentColor: '#D63629',
     secondaryColor: '#1B4988',
+
+    stickerImageUrl: './marker_patterns/talampad.png',
+    modelUrl: './output_models/talampad.glb',
+
+    // Live MindAR centered coordinates
+    arScale: '0.5 0.5 0.5',
+    arPosition: '0 0 0.05',
+    arRotation: '90 0 0',
+
+    // 3D Simulator normalized tabletop coordinates
+    simScale: '0.5 0.5 0.5',
+    simPosition: '0 0.05 0',
+    simRotation: '0 0 0',
+    autoSpin: true,
+
     description:
-      'Navigate real-world public administration dilemmas. Every decision shifts the Scales of Justice and tests whole-of-society integrity.',
+      'Championing ethical decision-making, public audit transparency, and whole-of-society integrity in public administration.',
   },
   {
     id: 'gameon',
+    targetIndex: 2,
+    icon: '🎲',
     name: 'PAG-IWAG Game On! (goVRnance)',
     shortLabel: 'goVRnance',
-    category: 'INTERACTIVE SIMULATION • PLAYTESTING',
+    category: 'CAPACITY DEV 03 • CIVIC CO-CREATION',
     tagline: 'Gaming for Good Governance & Civic Co-Creation',
     accentColor: '#1B4988',
     secondaryColor: '#FFD147',
+
+    stickerImageUrl: './marker_patterns/gameon.png',
+    modelUrl: './output_models/gameon.glb',
+
+    // Live MindAR centered coordinates
+    arScale: '0.5 0.5 0.5',
+    arPosition: '0 0 0.05',
+    arRotation: '90 0 0',
+
+    // 3D Simulator normalized tabletop coordinates
+    simScale: '0.5 0.5 0.5',
+    simPosition: '0 0.05 0',
+    simRotation: '0 0 0',
+    autoSpin: true,
+
     description:
-      'Roll the goVRnance Civic Action Die to trigger rapid tabletop & VR governance challenges across participating State Universities and Colleges (SUCs).',
+      'Interactive tabletop and VR governance simulations uniting State Universities and Colleges (SUCs) and local civil servants.',
   },
   {
     id: 'kabataan',
-    name: 'Ang Bukas: Lingkod Bayani Pledge',
+    targetIndex: 3,
+    icon: '🔥',
+    name: 'Ang Bukas: Lingkod Bayani',
     shortLabel: 'Lingkod Bayani',
     category: 'WHOLE-OF-SOCIETY COMMITMENT',
     tagline: 'Kabataan Para sa Matapat na Pamahalaan',
     accentColor: '#F6A821',
     secondaryColor: '#0D254C',
+
+    stickerImageUrl: './marker_patterns/kabataan.png',
+    modelUrl: './output_models/kabataan.glb',
+
+    // Live MindAR centered coordinates
+    arScale: '0.5 0.5 0.5',
+    arPosition: '0 0 0.05',
+    arRotation: '90 0 0',
+
+    // 3D Simulator normalized tabletop coordinates
+    simScale: '0.5 0.5 0.5',
+    simPosition: '0 0.05 0',
+    simRotation: '0 0 0',
+    autoSpin: true,
+
     description:
-      'Public office is a position of TRUST, NOT of PRIVILEGE. Seal your commitment as a principled citizen and future public servant.',
+      'Public office is a position of TRUST, NOT of PRIVILEGE — illuminating a new generation of principled citizen-leaders.',
   },
-];
 
-export const PAGTANOW_HORIZONS = {
-  '2030': {
-    label: '2030 • Near Horizon',
-    prompt:
-      'AI-assisted barangay budget dashboards become standard across SUCs and LGUs. How do youth monitors ensure marginalized coastal & rural voices are not left offline?',
-  },
-  '2035': {
-    label: '2035 • Reform Horizon',
-    prompt:
-      'Climate-adaptive flood infrastructure requires co-signed citizen audits before funds are released. What early-warning metrics should communities track?',
-  },
-  '2040': {
-    label: '2040 • Generational Horizon',
-    prompt:
-      'Today’s UP & SUC student delegates are now department heads and mayors. Which institutional habit built during PAG-IWAG keeps local governance incorruptible?',
-  },
-};
-
-export const PAGTANOW_ARCH_CARDS = [
+  /* =========================================================================
+     EXAMPLE TEMPLATE FOR ADDING A 5TH STICKER (targetIndex: 4):
+     1. Include custom_sticker.png as the 5th image when compiling stickers.mind
+     2. Save custom_sticker.png in marker_patterns/ and custom_model.glb in output_models/
+     3. Uncomment this block:
+     =========================================================================
   {
-    id: 'smile-teeth',
-    mood: 'SMILE WITH TEETH',
-    verdict: 'YES. ANYTHING IS POSSIBLE.',
-    bg: '#F6A821',
-    insight:
-      'High civic optimism! Participatory citizen assemblies and open procurement portals turn public skepticism into shared ownership.',
+    id: 'custom_sticker',
+    targetIndex: 4,
+    icon: '✨',
+    name: 'PAG-IWAG Caravan Emblem',
+    shortLabel: 'Caravan',
+    category: 'SPECIAL EXHIBIT • 3D SHOWCASE',
+    tagline: 'Whole-of-Society Governance Innovation',
+    accentColor: '#1B4988',
+    secondaryColor: '#F6A821',
+    stickerImageUrl: './marker_patterns/custom_sticker.png',
+    modelUrl: './output_models/custom_model.glb',
+    arScale: '0.5 0.5 0.5',
+    arPosition: '0 0 0.05',
+    arRotation: '90 0 0',
+    simScale: '0.5 0.5 0.5',
+    simPosition: '0 0.05 0',
+    simRotation: '0 0 0',
+    autoSpin: true,
+    description:
+      'Borderless custom sticker & 3D model created by the PAG-IWAG design team.',
   },
-  {
-    id: 'yes-limit',
-    mood: 'HOPEFUL REALIST',
-    verdict: 'YES, PERO MAY HANGGANAN.',
-    bg: '#3B429F',
-    insight:
-      'Digital transparency tools work—but only when paired with strong whistleblower protection and independent COA/SUC monitoring.',
-  },
-  {
-    id: 'no-konti',
-    mood: 'CAUTIOUS OBSERVER',
-    verdict: 'NO, PERO BAKA MERON KONTI.',
-    bg: '#2B7A78',
-    insight:
-      'Legacy red tape slows reform, yet pocket innovations led by young LGU planners show measurable integrity gains.',
-  },
-  {
-    id: 'sadt-cry',
-    mood: 'SADT WITH CRY',
-    verdict: 'NO. DEINS. WALA.',
-    bg: '#162B4D',
-    insight:
-      'Warning signal! When flood-control or disaster funds lack public audit trails, community trust erodes fastest. Time for Pag-iwag intervention.',
-  },
-];
-
-export const TALAMPAD_SCENARIOS = [
-  {
-    id: 'flood-audit',
-    title: 'Scenario 1: Anomalous Flood-Control Variation Order',
-    context:
-      'You are a municipal planning officer reviewing a P61M flood-control project. A contractor offers a "fast-track courtesy gift" to approve incomplete drainage specs before typhoon season.',
-    options: [
-      {
-        label: 'Reject gift, issue a formal Notice of Non-Compliance & publish inspection photos.',
-        delta: +25,
-        tilt: 0.28,
-        feedback:
-          'Principled Action (+25 Integrity): Transparent documentation protects both public funds and community flood safety.',
-      },
-      {
-        label: 'Quietly delay signing without filing an official audit report.',
-        delta: -5,
-        tilt: -0.12,
-        feedback:
-          'Partial Hesitation (-5 Integrity): Silence stalls immediate harm but leaves accountability gaps unaddressed.',
-      },
-      {
-        label: 'Sign the clearance to avoid conflict with senior officials.',
-        delta: -30,
-        tilt: -0.35,
-        feedback:
-          'Compromised Trust (-30 Integrity): Maging Pag-asa, ’Wag Paasa—public office is a trust, not a privilege.',
-      },
-    ],
-  },
-  {
-    id: 'suc-scholarship',
-    title: 'Scenario 2: SUC-LGU Youth Governance Fellowship',
-    context:
-      'A local official asks you to prioritize political allies’ relatives for limited regional policy fellowship slots over higher-scoring state university applicants.',
-    options: [
-      {
-        label: 'Enforce blind rubric scoring and post anonymized selection results publicly.',
-        delta: +25,
-        tilt: 0.3,
-        feedback:
-          'Merit & Fairness (+25 Integrity): Institutionalizing blind rubrics removes patronage from youth leadership.',
-      },
-      {
-        label: 'Create an informal "reserved slot" while keeping half the list merit-based.',
-        delta: -15,
-        tilt: -0.22,
-        feedback:
-          'Eroded Standard (-15 Integrity): Compromising meritocracy undermines whole-of-society credibility.',
-      },
-    ],
-  },
-];
-
-export const GOVRNANCE_DIE_PROMPTS = [
-  {
-    face: '1 • CITIZEN AUDIT',
-    challenge:
-      'Inspect a barangay infrastructure billboard: verify project cost, contractor name, completion date, and grievance hotline within 60 seconds.',
-  },
-  {
-    face: '2 • FORESIGHT RADAR',
-    challenge:
-      'Identify one emerging 2030 risk facing your host SUC province (climate, AI misinformation, or water security) and propose a preventive ordinance.',
-  },
-  {
-    face: '3 • OPEN DATA SPRINT',
-    challenge:
-      'Translate a complex LGU budget line item into a 1-sentence infographic headline any high school student can understand.',
-  },
-  {
-    face: '4 • INTEGRITY SHIELD',
-    challenge:
-      'Roleplay declining a conflict-of-interest favor using the PAG-IWAG mantra: "Maging Pag-asa, ’Wag Paasa."',
-  },
-  {
-    face: '5 • CO-CREATION LAB',
-    challenge:
-      'Pair an SUC student researcher with a local civil servant to co-design one 30-day transparency experiment.',
-  },
-  {
-    face: '6 • PAG-IWAG ILLUMINATE',
-    challenge:
-      'Wildcard! Share one concrete governance reform from your region that deserves national replication.',
-  },
+  */
 ];

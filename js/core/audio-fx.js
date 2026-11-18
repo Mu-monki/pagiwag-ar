@@ -1,13 +1,27 @@
 /**
- * Lightweight Web Audio Synthesizer for PAG-IWAG AR Feedback Chimes
+ * Lightweight Web Audio Synthesizer for PAG-IWAG AR Sound Effects (SFX)
  */
 
 class AudioFX {
   constructor() {
     this.ctx = null;
+    this.muted = false;
+  }
+
+  setMuted(muted) {
+    this.muted = Boolean(muted);
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (!this.muted) {
+      this.playActionTap();
+    }
+    return this.muted;
   }
 
   ensureContext() {
+    if (this.muted) return;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) {
@@ -20,6 +34,7 @@ class AudioFX {
   }
 
   playTone(freq = 523.25, duration = 0.14, type = 'triangle', delay = 0) {
+    if (this.muted) return;
     try {
       this.ensureContext();
       if (!this.ctx) return;
@@ -60,9 +75,9 @@ class AudioFX {
     this.playTone(880.0, 0.22, 'triangle', 0.09);
   }
 
-  playWarningScore() {
-    this.playTone(329.63, 0.18, 'sawtooth', 0);
-    this.playTone(261.63, 0.24, 'sawtooth', 0.12);
+  playCameraReady() {
+    this.playTone(440.0, 0.11, 'sine', 0);
+    this.playTone(554.37, 0.15, 'sine', 0.08);
   }
 }
 

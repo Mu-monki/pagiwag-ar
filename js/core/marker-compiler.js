@@ -1,298 +1,223 @@
 /**
- * PAG-IWAG Marker Compiler & Offscreen Sticker Artwork Generator
- * Draws each Capacity Development sticker inside a calibrated AR.js tracking frame
- * and encodes a 16x16 BGR 4-orientation .patt data URI (CSP-safe, zero blob: XHR).
+ * PAG-IWAG MindAR Target Bundle & 3D Model Preloader
+ *
+ * 1. Verifies the compiled MindAR target bundle (`marker_patterns/stickers.mind`)
+ * 2. Resolves absolute URLs for MindAR so nested deployment paths work cleanly
+ * 3. Loads teammates' borderless sticker PNGs (or renders borderless circular badges)
+ * 4. Verifies teammates' .glb/.gltf 3D models in `output_models/`
  */
 
-import { STICKER_MARKERS } from '../config/activities-data.js';
+import { MINDAR_CONFIG, STICKER_MARKERS } from '../config/activities-data.js';
 
 const CANVAS_SIZE = 512;
-const PATTERN_RATIO = 0.70; // Matches <a-scene arjs="patternRatio: 0.70">
-const GRID_SIZE = 16;
 
 /**
- * Draws the custom illustrated sticker art inside the inner safe region of the AR marker.
+ * Generates a borderless sticker preview illustration when a teammate's PNG
+ * has not been placed into marker_patterns/ yet.
  */
-function drawStickerIllustration(ctx, id, x, y, size) {
+export function renderBorderlessFallbackCanvas(stickerId) {
+  const canvas = document.createElement('canvas');
+  canvas.width = CANVAS_SIZE;
+  canvas.height = CANVAS_SIZE;
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+  const cx = CANVAS_SIZE / 2;
+  const cy = CANVAS_SIZE / 2;
+  const radius = CANVAS_SIZE * 0.45;
+
+  // Die-cut navy & cream circular sticker aesthetic (no square AR borders)
+  ctx.fillStyle = '#0D254C';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#F7F4EB';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 14, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.save();
   ctx.beginPath();
-  ctx.rect(x, y, size, size);
+  ctx.arc(cx, cy, radius - 22, 0, Math.PI * 2);
   ctx.clip();
 
-  // Warm parchment background for every sticker
-  ctx.fillStyle = '#F7F4EB';
-  ctx.fillRect(x, y, size, size);
-
-  const cx = x + size / 2;
-  const cy = y + size / 2;
-
-  if (id === 'pagtanow') {
-    // Teal & Gold Futures Crystal Globe motif
+  if (stickerId === 'pagtanow') {
     ctx.fillStyle = '#2B7A78';
     ctx.beginPath();
-    ctx.arc(cx, cy + 8, size * 0.31, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 16, 135, 0, Math.PI * 2);
     ctx.fill();
 
-    // Inner glowing horizon
     ctx.fillStyle = '#FFD147';
     ctx.beginPath();
-    ctx.arc(cx, cy - 4, size * 0.21, Math.PI, 0);
+    ctx.arc(cx, cy - 10, 90, Math.PI, 0);
     ctx.fill();
 
-    // Stylized blue hills inside globe
     ctx.fillStyle = '#1B4988';
     ctx.beginPath();
-    ctx.arc(cx, cy + 16, size * 0.23, 0, Math.PI);
+    ctx.arc(cx, cy + 28, 96, 0, Math.PI);
     ctx.fill();
 
-    // Pedestal base
-    ctx.fillStyle = '#D63629';
-    ctx.fillRect(cx - size * 0.18, cy + size * 0.31, size * 0.36, size * 0.08);
-
-    // Top banner bar
     ctx.fillStyle = '#0D254C';
-    ctx.fillRect(x + 14, y + 14, size - 28, size * 0.14);
+    ctx.fillRect(70, 96, CANVAS_SIZE - 140, 56);
     ctx.fillStyle = '#FFD147';
-    ctx.font = 'bold 26px sans-serif';
+    ctx.font = 'bold 34px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('PagtaNOW', cx, y + 14 + size * 0.10);
-  } else if (id === 'talampad') {
-    // Winding Coral/Navy Accountability Path + Scales
+    ctx.fillText('PagtaNOW', cx, 134);
+  } else if (stickerId === 'talampad') {
     ctx.strokeStyle = '#D63629';
-    ctx.lineWidth = size * 0.11;
+    ctx.lineWidth = 42;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(x + size * 0.22, y + size * 0.82);
-    ctx.bezierCurveTo(
-      x + size * 0.85,
-      y + size * 0.72,
-      x + size * 0.15,
-      y + size * 0.42,
-      x + size * 0.78,
-      y + size * 0.34
-    );
+    ctx.moveTo(120, 385);
+    ctx.bezierCurveTo(395, 340, 115, 215, 380, 175);
     ctx.stroke();
 
-    // Center gold compass circle
     ctx.fillStyle = '#F6A821';
     ctx.beginPath();
-    ctx.arc(cx, cy + 10, size * 0.16, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 20, 68, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#0D254C';
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - size * 0.11);
-    ctx.lineTo(cx + size * 0.05, cy + 10);
-    ctx.lineTo(cx, cy + size * 0.24);
-    ctx.lineTo(cx - size * 0.05, cy + 10);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top Header
     ctx.fillStyle = '#1B4988';
-    ctx.fillRect(x + 14, y + 14, size - 28, size * 0.14);
+    ctx.fillRect(70, 96, CANVAS_SIZE - 140, 56);
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 25px sans-serif';
+    ctx.font = 'bold 32px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('TALAMPAD', cx, y + 14 + size * 0.10);
-  } else if (id === 'gameon') {
-    // Civic Board Game Grid + VR & Governance Die
+    ctx.fillText('TALAMPAD', cx, 134);
+  } else if (stickerId === 'gameon') {
     ctx.fillStyle = '#1B4988';
-    ctx.fillRect(x + size * 0.14, y + size * 0.34, size * 0.72, size * 0.48);
+    ctx.fillRect(105, 175, 302, 200);
 
-    // Checkerboard tiles
-    const tile = (size * 0.64) / 4;
+    const tile = 68;
     const colors = ['#F6A821', '#2B7A78', '#D63629', '#FFD147'];
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 4; c++) {
         ctx.fillStyle = colors[(r + c) % colors.length];
-        ctx.fillRect(
-          x + size * 0.18 + c * tile,
-          y + size * 0.38 + r * tile,
-          tile - 4,
-          tile - 4
-        );
+        ctx.fillRect(120 + c * tile, 188 + r * 62, tile - 8, 54);
       }
     }
 
-    // Top Header
     ctx.fillStyle = '#D63629';
-    ctx.fillRect(x + 14, y + 14, size - 28, size * 0.14);
+    ctx.fillRect(70, 96, CANVAS_SIZE - 140, 56);
     ctx.fillStyle = '#FFD147';
-    ctx.font = 'bold 24px sans-serif';
+    ctx.font = 'bold 31px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('goVRnance', cx, y + 14 + size * 0.10);
+    ctx.fillText('goVRnance', cx, 134);
   } else {
-    // Kabataan / Oblation Torch & Rising Sunburst
     ctx.fillStyle = '#F6A821';
     for (let i = 0; i < 8; i++) {
       const angle = (i * Math.PI) / 4;
       ctx.beginPath();
-      ctx.moveTo(cx, cy + 8);
-      ctx.arc(cx, cy + 8, size * 0.36, angle, angle + 0.22);
+      ctx.moveTo(cx, cy + 16);
+      ctx.arc(cx, cy + 16, 155, angle, angle + 0.24);
       ctx.closePath();
       ctx.fill();
     }
 
-    // Flame & Pedestal
     ctx.fillStyle = '#D63629';
     ctx.beginPath();
-    ctx.arc(cx, cy + 2, size * 0.17, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 4, 72, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#0D254C';
-    ctx.fillRect(cx - size * 0.14, cy + size * 0.18, size * 0.28, size * 0.22);
+    ctx.fillRect(cx - 56, cy + 72, 112, 92);
 
-    // Top Header
     ctx.fillStyle = '#0D254C';
-    ctx.fillRect(x + 14, y + 14, size - 28, size * 0.14);
+    ctx.fillRect(70, 96, CANVAS_SIZE - 140, 56);
     ctx.fillStyle = '#F6A821';
-    ctx.font = 'bold 22px sans-serif';
+    ctx.font = 'bold 30px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('LINGKOD BAYANI', cx, y + 14 + size * 0.10);
+    ctx.fillText('PAG-IWAG', cx, 134);
   }
-
-  // Subtle inner corner accents for strong asymmetric feature detection
-  ctx.fillStyle = '#0D254C';
-  ctx.fillRect(x + 10, y + size - 26, 16, 16);
-  ctx.fillStyle = '#D63629';
-  ctx.beginPath();
-  ctx.arc(x + size - 18, y + size - 18, 9, 0, Math.PI * 2);
-  ctx.fill();
 
   ctx.restore();
+  return canvas;
 }
 
 /**
- * Generates a full 512x512 AR marker canvas with white quiet zone + black tracking frame + sticker art.
+ * Checks whether a binary file (.mind or .glb) exists and is not an HTML 404 page
  */
-export function renderMarkerCanvas(stickerId) {
-  const canvas = document.createElement('canvas');
-  canvas.width = CANVAS_SIZE;
-  canvas.height = CANVAS_SIZE;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-  // Outer white quiet margin
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-  // Black AR.js marker square
-  const quiet = Math.round(CANVAS_SIZE * 0.06);
-  const markerOuter = CANVAS_SIZE - quiet * 2;
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(quiet, quiet, markerOuter, markerOuter);
-
-  // Inner illustration area matching PATTERN_RATIO
-  const innerSize = Math.round(markerOuter * PATTERN_RATIO);
-  const innerOffset = Math.round((CANVAS_SIZE - innerSize) / 2);
-
-  drawStickerIllustration(ctx, stickerId, innerOffset, innerOffset, innerSize);
-
-  return {
-    canvas,
-    innerOffset,
-    innerSize,
-  };
+async function checkBinaryAssetExists(url) {
+  if (!url) return false;
+  try {
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) return false;
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    if (contentType.includes('text/html')) return false;
+    const buf = await res.arrayBuffer();
+    return buf.byteLength > 32;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Compiles a 16x16 4-orientation BGR .patt string from the inner sticker canvas region.
+ * Loads a teammate's borderless sticker PNG onto a 512x512 canvas
  */
-function encodePattFromCanvas(sourceCanvas, innerOffset, innerSize) {
-  const sampleCanvas = document.createElement('canvas');
-  sampleCanvas.width = GRID_SIZE;
-  sampleCanvas.height = GRID_SIZE;
-  const sCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+function tryLoadStickerImage(imageUrl) {
+  if (!imageUrl) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = CANVAS_SIZE;
+      canvas.height = CANVAS_SIZE;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-  sCtx.drawImage(
-    sourceCanvas,
-    innerOffset,
-    innerOffset,
-    innerSize,
-    innerSize,
-    0,
-    0,
-    GRID_SIZE,
-    GRID_SIZE
-  );
-
-  const imgData = sCtx.getImageData(0, 0, GRID_SIZE, GRID_SIZE).data;
-
-  // Extract base 16x16 RGB grid
-  const baseGrid = [];
-  for (let y = 0; y < GRID_SIZE; y++) {
-    const row = [];
-    for (let x = 0; x < GRID_SIZE; x++) {
-      const idx = (y * GRID_SIZE + x) * 4;
-      row.push({
-        r: imgData[idx],
-        g: imgData[idx + 1],
-        b: imgData[idx + 2],
-      });
-    }
-    baseGrid.push(row);
-  }
-
-  // Rotate grid 90 degrees counter-clockwise for the 4 ARToolKit orientations
-  function rotate90CCW(grid) {
-    const out = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE));
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
-        out[GRID_SIZE - 1 - x][y] = grid[y][x];
-      }
-    }
-    return out;
-  }
-
-  const orientations = [baseGrid];
-  for (let i = 1; i < 4; i++) {
-    orientations.push(rotate90CCW(orientations[i - 1]));
-  }
-
-  const blocks = orientations.map((grid) => {
-    const channels = ['b', 'g', 'r']; // ARToolKit expects B, then G, then R
-    return channels
-      .map((ch) =>
-        grid
-          .map((row) =>
-            row.map((px) => String(px[ch]).padStart(3, ' ')).join(' ')
-          )
-          .join('\n')
-      )
-      .join('\n');
+      const scale = Math.min(CANVAS_SIZE / img.width, CANVAS_SIZE / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (CANVAS_SIZE - w) / 2, (CANVAS_SIZE - h) / 2, w, h);
+      resolve(canvas);
+    };
+    img.onerror = () => resolve(null);
+    img.src = imageUrl;
   });
-
-  return blocks.join('\n\n') + '\n';
 }
 
 /**
- * Compiles all 4 PAG-IWAG sticker markers asynchronously, reporting progress to the splash screen.
+ * Pre-validates stickers.mind, sticker artwork, and 3D models
  */
 export async function compileAllStickerAssets(onProgress) {
-  const compiledMap = {};
+  const resolvedMindUrl = new URL(MINDAR_CONFIG.targetSrc, window.location.href).href;
+  const hasMindBundle = await checkBinaryAssetExists(resolvedMindUrl);
+
+  const items = {};
 
   for (let i = 0; i < STICKER_MARKERS.length; i++) {
     const sticker = STICKER_MARKERS[i];
-    const { canvas, innerOffset, innerSize } = renderMarkerCanvas(sticker.id);
-    const pattText = encodePattFromCanvas(canvas, innerOffset, innerSize);
-    const pattDataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(pattText);
-    const previewDataUrl = canvas.toDataURL('image/png');
 
-    compiledMap[sticker.id] = {
+    // 1. Load borderless sticker PNG (or render borderless circular badge fallback)
+    const customCanvas = await tryLoadStickerImage(sticker.stickerImageUrl);
+    const activeCanvas = customCanvas || renderBorderlessFallbackCanvas(sticker.id);
+    const previewDataUrl = activeCanvas.toDataURL('image/png');
+
+    // 2. Verify teammate's 3D .glb model in output_models/
+    const hasCustomModel = await checkBinaryAssetExists(sticker.modelUrl);
+
+    items[sticker.id] = {
       ...sticker,
-      canvas,
+      canvas: activeCanvas,
       previewDataUrl,
-      pattText,
-      pattDataUri,
+      hasMindBundle,
+      hasCustomArtwork: Boolean(customCanvas),
+      hasCustomModel,
     };
 
     if (typeof onProgress === 'function') {
-      onProgress(sticker.id, i + 1, STICKER_MARKERS.length);
+      onProgress(items[sticker.id], i + 1, STICKER_MARKERS.length);
     }
 
-    // Yield a frame so splash screen animations & progress bar paint smoothly
-    await new Promise((resolve) => setTimeout(resolve, 90));
+    await new Promise((resolve) => setTimeout(resolve, 60));
   }
 
-  return compiledMap;
+  return {
+    hasMindBundle,
+    resolvedMindUrl,
+    maxTrack: MINDAR_CONFIG.maxTrack || 2,
+    items,
+  };
 }

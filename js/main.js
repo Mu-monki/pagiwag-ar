@@ -1,7 +1,8 @@
 /**
- * PAG-IWAG AR — Main Application Boot Sequence & Event Wiring
+ * PAG-IWAG AR — Main Application Boot Sequence & MindAR Event Wiring
  */
 
+import { STICKER_MARKERS } from './config/activities-data.js';
 import { compileAllStickerAssets } from './core/marker-compiler.js';
 import { checkCameraEnvironment } from './core/camera-preflight.js';
 import { audioFX } from './core/audio-fx.js';
@@ -13,21 +14,21 @@ import {
 } from './ui/marker-exporter.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Splash Screen Elements
   const splashScreen = document.getElementById('splash-screen');
   const statusText = document.getElementById('loader-status-text');
   const percentText = document.getElementById('loader-percent');
   const progressBar = document.getElementById('loader-progressbar');
   const barFill = document.getElementById('loader-bar-fill');
+  const checklistEl = document.getElementById('asset-checklist');
 
   const btnLaunchAR = document.getElementById('btn-launch-ar');
   const btnLaunchSim = document.getElementById('btn-launch-sim');
   const btnOpenKit = document.getElementById('btn-open-kit');
 
-  // Workspace Elements
   const workspace = document.getElementById('ar-workspace');
   const sceneMount = document.getElementById('scene-mount');
   const hudModeBadge = document.getElementById('hud-mode-badge');
+  const btnToggleSfx = document.getElementById('btn-toggle-sfx');
   const btnToggleMode = document.getElementById('btn-toggle-mode');
   const btnBackSplash = document.getElementById('btn-back-splash');
   const btnHudKit = document.getElementById('btn-hud-kit');
@@ -40,15 +41,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const reticleHintText = document.getElementById('reticle-hint-text');
   const simStickerBar = document.getElementById('sim-sticker-bar');
 
-  // Kit Modal Elements
   const kitModal = document.getElementById('kit-modal');
   const kitGrid = document.getElementById('kit-grid');
   const btnCloseKit = document.getElementById('btn-close-kit');
   const btnDownloadSheet = document.getElementById('btn-download-sheet');
 
-  let compiledAssets = null;
+  let compiledBundle = null;
   let sceneManager = null;
-  let activityDrawer = null;
+  let infoDrawer = null;
 
   function showDiagnostic(message) {
     diagnosticText.textContent = message;
@@ -59,37 +59,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     diagnosticBanner.classList.add('hidden');
   }
 
-  // 1. Functional Splash Screen Asset Preload Sequence
-  statusText.textContent = 'Compiling custom AR.js .patt markers...';
-  compiledAssets = await compileAllStickerAssets((assetId, step, total) => {
-    const pct = Math.round((step / total) * 85);
+  // Render splash checklist chips & simulator tabs dynamically from STICKER_MARKERS
+  checklistEl.innerHTML = STICKER_MARKERS.map(
+    (s) => `
+      <div class="asset-chip" data-asset="${s.id}">
+        <div class="asset-chip-left">
+          <span class="chip-dot"></span>
+          <span>${s.shortLabel}</span>
+        </div>
+        <span class="asset-chip-tag" data-tag="${s.id}">checking</span>
+      </div>`
+  ).join('');
+
+  simStickerBar.innerHTML = STICKER_MARKERS.map(
+    (s, idx) => `
+      <button class="sim-tab ${idx === 0 ? 'active' : ''}" data-marker="${s.id}">
+        ${s.icon || '✨'} ${s.shortLabel}
+      </button>`
+  ).join('');
+
+  // 1. Functional Splash Screen MindAR Bundle & 3D Model Check
+  statusText.textContent = 'Checking stickers.mind & 3D models...';
+  compiledBundle = await compileAllStickerAssets((asset, step, total) => {
+    const pct = Math.round((step / total) * 90);
     barFill.style.width = `${pct}%`;
     percentText.textContent = `${pct}%`;
     progressBar.setAttribute('aria-valuenow', String(pct));
 
-    const chip = document.querySelector(`.asset-chip[data-asset="${assetId}"]`);
-    if (chip) chip.classList.add('ready');
-    statusText.textContent = `Compiled ${assetId.toUpperCase()} marker (${step}/${total})...`;
+    const chip = checklistEl.querySelector(`.asset-chip[data-asset="${asset.id}"]`);
+    const tag = checklistEl.querySelector(`[data-tag="${asset.id}"]`);
+    if (chip) {
+      chip.classList.add(asset.hasMindBundle ? 'ready' : 'sim-only');
+    }
+    if (tag) {
+      const targetBadge = asset.hasMindBundle ? 'MIND' : 'SIM';
+      const modelBadge = asset.hasCustomModel ? '+GLB' : '+3D';
+      tag.textContent = `${targetBadge}${modelBadge}`;
+    }
+    statusText.textContent = `Verified ${asset.shortLabel} (${step}/${total})...`;
   });
 
-  statusText.textContent = 'Preparing 3D holograms & printable sticker sheet...';
-  renderKitModalGrid(kitGrid, compiledAssets);
+  statusText.textContent = 'Preparing borderless sticker kit...';
+  renderKitModalGrid(kitGrid, compiledBundle.items);
 
   barFill.style.width = '100%';
   percentText.textContent = '100%';
   progressBar.setAttribute('aria-valuenow', '100');
-  statusText.textContent = 'All PAG-IWAG AR assets ready!';
+  statusText.textContent = compiledBundle.hasMindBundle
+    ? `Ready! stickers.mind loaded (${STICKER_MARKERS.length} image targets).`
+    : 'Ready! Add stickers.mind in marker_patterns/ for live MindAR camera tracking.';
 
   btnLaunchAR.disabled = false;
   btnLaunchSim.disabled = false;
   btnOpenKit.disabled = false;
 
-  // 2. Initialize Scene Manager & Interactive Activity Drawer
+  // 2. Initialize Scene Manager & Sticker Info Drawer
   sceneManager = new SceneManager({
     mountEl: sceneMount,
     onMarkerDetected: (markerId) => {
       scanReticle.classList.add('hidden');
-      activityDrawer.setActiveMarker(markerId);
+      infoDrawer.setActiveMarker(markerId);
     },
     onMarkerLost: () => {
       if (sceneManager.mode === 'live') {
@@ -99,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     onCameraReady: () => {
       if (reticleHintText) {
         reticleHintText.innerHTML =
-          'Point camera at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker';
+          'Point camera at any borderless <strong>PAG-IWAG</strong> sticker';
       }
     },
     onCameraError: (reason) => {
@@ -107,12 +136,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   });
 
-  activityDrawer = new ActivityDrawer({
+  infoDrawer = new ActivityDrawer({
     drawerEl: document.getElementById('activity-drawer'),
     categoryEl: document.getElementById('drawer-category'),
     titleEl: document.getElementById('drawer-title'),
     bodyEl: document.getElementById('drawer-body'),
-    sceneManager,
+  });
+  
+  window.addEventListener('gltf-clips-loaded', () => {
+    infoDrawer.refreshActiveDrawer();
   });
 
   // 3. Mode Launchers
@@ -131,14 +163,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (reticleHintText) {
       reticleHintText.innerHTML =
-        'Starting camera feed… Point at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker';
+        'Starting MindAR camera… Point at any <strong>PAG-IWAG</strong> sticker';
     }
 
-    hudModeBadge.textContent = 'LIVE CAMERA';
+    hudModeBadge.textContent = 'MINDAR TRACKING';
     hudModeBadge.className = 'hud-badge hud-badge--live';
     btnToggleMode.textContent = 'Switch to 3D Sim';
 
-    sceneManager.mountLiveAR(compiledAssets);
+    sceneManager.mountLiveAR(compiledBundle);
   }
 
   function enterSimulatorMode(diagnosticMsg = null) {
@@ -149,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     hudModeBadge.textContent = '3D SIMULATOR';
     hudModeBadge.className = 'hud-badge hud-badge--sim';
-    btnToggleMode.textContent = 'Try Live Camera';
+    btnToggleMode.textContent = 'Try Live MindAR';
 
     if (diagnosticMsg) {
       showDiagnostic(diagnosticMsg);
@@ -157,10 +189,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       hideDiagnostic();
     }
 
-    sceneManager.mountSimulator(compiledAssets, 'pagtanow');
+    const firstId = STICKER_MARKERS[0] ? STICKER_MARKERS[0].id : 'pagtanow';
+    simStickerBar.querySelectorAll('.sim-tab').forEach((t, idx) => {
+      t.classList.toggle('active', idx === 0);
+    });
+    sceneManager.mountSimulator(compiledBundle, firstId);
   }
 
-  // Launch Live AR directly inside the user click gesture
   btnLaunchAR.addEventListener('click', () => {
     audioFX.playActionTap();
     enterLiveMode();
@@ -180,6 +215,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  btnToggleSfx.addEventListener('click', () => {
+    const muted = audioFX.toggleMute();
+    btnToggleSfx.textContent = muted ? '🔇' : '🔊';
+    btnToggleSfx.title = muted ? 'Unmute Sound Effects' : 'Mute Sound Effects';
+  });
+
   btnBackSplash.addEventListener('click', () => {
     audioFX.playActionTap();
     sceneManager.clearScene();
@@ -187,7 +228,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     splashScreen.classList.remove('hidden');
   });
 
-  // Simulator Tab Switcher
   simStickerBar.querySelectorAll('.sim-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       simStickerBar.querySelectorAll('.sim-tab').forEach((t) => t.classList.remove('active'));
@@ -196,15 +236,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Drawer Handle Toggle
   document.getElementById('drawer-toggle-bar').addEventListener('click', () => {
     audioFX.playActionTap();
-    activityDrawer.toggleExpand();
+    infoDrawer.toggleExpand();
   });
 
   btnDismissBanner.addEventListener('click', hideDiagnostic);
 
-  // Kit Modal Controls
   btnOpenKit.addEventListener('click', () => {
     audioFX.playActionTap();
     kitModal.classList.remove('hidden');
@@ -221,6 +259,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   btnDownloadSheet.addEventListener('click', () => {
-    downloadPrintableSheet(compiledAssets);
+    downloadPrintableSheet(compiledBundle.items);
   });
 });

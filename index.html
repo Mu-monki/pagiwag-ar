@@ -3,32 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>PAG-IWAG AR — UP NCPAG GRIT Labs</title>
+  <title>PAG-IWAG AR — MindAR WebAR (UP NCPAG GRIT Labs)</title>
 
+  <!-- Editorial & Geometric Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
+  <!-- Modular Stylesheets -->
   <link rel="stylesheet" href="css/theme.css" />
   <link rel="stylesheet" href="css/splash.css" />
   <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
 
-  <script>
-    window.__originalAlert = window.alert;
-    window.__arAlerts = [];
-    window.alert = function (msg) {
-      const text = String(msg);
-      window.__arAlerts.push(text);
-      console.info("[PAG-IWAG AR Notice]", text);
-      window.dispatchEvent(new CustomEvent("pagiwag:ar-alert", { detail: text }));
-    };
-  </script>
-
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <!-- A-Frame + MindAR Image Tracking (Must load A-Frame first) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 </head>
 <body>
+  <!-- =========================================================
+       SPLASH SCREEN (MindAR Target & 3D Model Preloader)
+       ========================================================= -->
   <section id="splash-screen" class="splash-screen" aria-label="PAG-IWAG AR Asset Loader">
     <div class="weave-border weave-border--top" aria-hidden="true"></div>
 
@@ -46,6 +40,7 @@
       </header>
 
       <div class="splash-hero">
+        <!-- Animated Oblation Torch Emblem -->
         <div class="torch-emblem" aria-hidden="true">
           <svg viewBox="0 0 120 150" class="torch-svg">
             <defs>
@@ -73,17 +68,18 @@
         </div>
 
         <div class="splash-copy">
-          <span class="kicker-pill">TARA NA SA</span>
+          <span class="kicker-pill">MINDAR IMAGE TRACKING</span>
           <h1 class="splash-title">PAG-IWAG <span>AR</span></h1>
           <p class="splash-tagline">
-            <em>Pag-iwag</em> (Hiligaynon/Cebuano: <strong>“to illuminate”</strong>) — Scan our PAG-IWAG stickers to unlock interactive AR 3D Models.
+            <em>Pag-iwag</em> (Hiligaynon/Cebuano: <strong>“to illuminate”</strong>) — Scan our borderless Capacity Development stickers to reveal their 3D holograms and governance stories.
           </p>
         </div>
       </div>
 
+      <!-- Functional Asset Preloader Card -->
       <div class="loader-card">
         <div class="loader-header">
-          <span id="loader-status-text" class="loader-status">Initializing asset pipeline...</span>
+          <span id="loader-status-text" class="loader-status">Checking MindAR targets &amp; 3D models...</span>
           <span id="loader-percent" class="loader-percent">0%</span>
         </div>
 
@@ -91,38 +87,23 @@
           <div id="loader-bar-fill" class="loader-bar-fill"></div>
         </div>
 
-        <div class="asset-checklist" id="asset-checklist">
-          <div class="asset-chip" data-asset="pagtanow">
-            <span class="chip-dot"></span>
-            <span>PagtaNOW .patt</span>
-          </div>
-          <div class="asset-chip" data-asset="talampad">
-            <span class="chip-dot"></span>
-            <span>TALAMPAD .patt</span>
-          </div>
-          <div class="asset-chip" data-asset="gameon">
-            <span class="chip-dot"></span>
-            <span>goVRnance .patt</span>
-          </div>
-          <div class="asset-chip" data-asset="kabataan">
-            <span class="chip-dot"></span>
-            <span>Lingkod Bayani .patt</span>
-          </div>
-        </div>
+        <!-- Dynamically populated from STICKER_MARKERS -->
+        <div class="asset-checklist" id="asset-checklist"></div>
       </div>
 
+      <!-- Launch Action Controls -->
       <div class="splash-actions">
         <button id="btn-launch-ar" class="btn btn-primary" disabled>
-          <span class="btn-icon"><i class="fa-solid fa-camera"></i></span>
+          <span class="btn-icon">📷</span>
           <span>Launch PAG-IWAG AR</span>
         </button>
 
         <div class="secondary-actions">
           <button id="btn-launch-sim" class="btn btn-secondary" disabled>
-            <span><i class="fa-solid fa-hexagon-nodes"></i> Open 3D Simulator (No Camera)</span>
+            <span>🧭 Open 3D Simulator (No Camera)</span>
           </button>
           <button id="btn-open-kit" class="btn btn-outline" disabled>
-            <span><i class="fa-solid fa-tag"></i> Sticker Marker Kit</span>
+            <span>🖼️ Borderless Sticker Kit</span>
           </button>
         </div>
       </div>
@@ -135,29 +116,37 @@
     <div class="weave-border weave-border--bottom" aria-hidden="true"></div>
   </section>
 
+  <!-- =========================================================
+       MAIN AR / 3D EXPERIENCE VIEWPORT
+       ========================================================= -->
   <main id="ar-workspace" class="ar-workspace hidden">
+    <!-- Top HUD Bar -->
     <header class="ar-hud-top">
       <div class="hud-brand">
         <button id="btn-back-splash" class="hud-icon-btn" title="Back to Splash">←</button>
         <div>
           <span class="hud-title">PAG-IWAG AR</span>
-          <span id="hud-mode-badge" class="hud-badge hud-badge--live">LIVE CAMERA</span>
+          <span id="hud-mode-badge" class="hud-badge hud-badge--live">MINDAR TRACKING</span>
         </div>
       </div>
 
       <div class="hud-controls">
+        <button id="btn-toggle-sfx" class="hud-icon-btn" title="Toggle Sound Effects" aria-label="Toggle Sound Effects">🔊</button>
         <button id="btn-toggle-mode" class="hud-pill-btn">Switch to 3D Sim</button>
-        <button id="btn-hud-kit" class="hud-pill-btn hud-pill-btn--gold">Markers</button>
+        <button id="btn-hud-kit" class="hud-pill-btn hud-pill-btn--gold">Stickers</button>
       </div>
     </header>
 
+    <!-- Diagnostic / Fallback Notice Banner -->
     <div id="diagnostic-banner" class="diagnostic-banner hidden" role="status">
       <span id="diagnostic-text">Camera unavailable — running Interactive 3D Sticker Simulator.</span>
       <button id="btn-dismiss-banner" aria-label="Dismiss notice">✕</button>
     </div>
 
+    <!-- Container where MindAR Live Scene OR 3D Simulator Canvas mounts -->
     <div id="scene-mount" class="scene-mount"></div>
 
+    <!-- Scanning Reticle (Shown in Live Camera mode when no sticker is locked) -->
     <div id="scan-reticle" class="scan-reticle">
       <div class="reticle-frame">
         <span class="corner tl"></span>
@@ -165,16 +154,13 @@
         <span class="corner bl"></span>
         <span class="corner br"></span>
       </div>
-      <p class="reticle-hint" id="reticle-hint-text">Starting camera feed… Point at a <strong>PagtaNOW</strong>, <strong>TALAMPAD</strong>, or <strong>PAG-IWAG</strong> sticker</p>
+      <p class="reticle-hint" id="reticle-hint-text">Initializing MindAR camera… Point at any <strong>PAG-IWAG</strong> sticker</p>
     </div>
 
-    <nav id="sim-sticker-bar" class="sim-sticker-bar hidden" aria-label="Select Sticker Marker">
-      <button class="sim-tab active" data-marker="pagtanow">🔮 PagtaNOW</button>
-      <button class="sim-tab" data-marker="talampad">⚖️ TALAMPAD</button>
-      <button class="sim-tab" data-marker="gameon">🎲 goVRnance</button>
-      <button class="sim-tab" data-marker="kabataan">🔥 Lingkod Bayani</button>
-    </nav>
+    <!-- Simulator Quick Sticker Switcher (Dynamically populated) -->
+    <nav id="sim-sticker-bar" class="sim-sticker-bar hidden" aria-label="Select Sticker"></nav>
 
+    <!-- Bottom Sticker & 3D Model Info Drawer -->
     <aside id="activity-drawer" class="activity-drawer collapsed" aria-live="polite">
       <div class="drawer-handle-row" id="drawer-toggle-bar">
         <div class="drawer-pill"></div>
@@ -182,42 +168,46 @@
           <span id="drawer-category" class="drawer-tag">CAPACITY DEVELOPMENT</span>
           <h2 id="drawer-title" class="drawer-title">Select or Scan a Sticker</h2>
         </div>
-        <button id="btn-expand-drawer" class="drawer-expand-btn" aria-label="Toggle Activity Panel">▲</button>
+        <button id="btn-expand-drawer" class="drawer-expand-btn" aria-label="Toggle Info Panel">▲</button>
       </div>
 
       <div id="drawer-body" class="drawer-body">
         <p class="drawer-placeholder">
-          Scan any of the 4 PAG-IWAG event stickers—or tap a sticker tab in 3D Simulator mode—to launch its interactive foresight or accountability mini-activity.
+          Scan any borderless PAG-IWAG sticker—or tap a sticker tab in 3D Simulator mode—to inspect its 3D hologram and details.
         </p>
       </div>
     </aside>
   </main>
 
+  <!-- =========================================================
+       BORDERLESS STICKER KIT MODAL
+       ========================================================= -->
   <div id="kit-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="kit-modal-title">
     <div class="modal-card">
       <div class="weave-border weave-border--top" aria-hidden="true"></div>
       <div class="modal-header">
         <div>
-          <span class="kicker-pill">AR-READY PRINTABLES</span>
-          <h2 id="kit-modal-title">PAG-IWAG Sticker Marker Kit</h2>
+          <span class="kicker-pill">NO BLACK BORDERS NEEDED</span>
+          <h2 id="kit-modal-title">PAG-IWAG Borderless Sticker Kit</h2>
         </div>
         <button id="btn-close-kit" class="hud-icon-btn" aria-label="Close Modal">✕</button>
       </div>
 
       <p class="modal-desc">
-        Each sticker includes a calibrated high-contrast AR.js tracking frame. Print the 2&times;2 sheet or display a sticker on a second screen to test live camera tracking.
+        Powered by <strong>MindAR Image Tracking</strong>: your teammates' full-bleed or die-cut sticker designs track directly from a single compiled <code>stickers.mind</code> file without black square borders.
       </p>
 
       <div id="kit-grid" class="kit-grid"></div>
 
       <div class="modal-footer">
         <button id="btn-download-sheet" class="btn btn-primary">
-          <span>⬇️ Download Full 2&times;2 Printable Sheet (PNG)</span>
+          <span>⬇️ Download Full Borderless Sticker Sheet (PNG)</span>
         </button>
       </div>
     </div>
   </div>
 
+  <!-- Main Application Entry Point -->
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

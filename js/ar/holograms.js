@@ -1,13 +1,78 @@
 /**
- * Procedural 3D A-Frame / Three.js Hologram Builders for Each PAG-IWAG Sticker
+ * 3D Model (.glb/.gltf) & Procedural Hologram Builders for PAG-IWAG MindAR Stickers
+ *
+ * Supports two coordinate modes:
+ * - mode === 'ar': Centered MindAR image target coordinates (`arPosition`, `arScale`, `arRotation`),
+ *   where +Z extends outward from the sticker toward the viewer.
+ * - mode === 'sim': Normalized tabletop 3D Simulator coordinates (`simPosition`, `simScale`, `simRotation`),
+ *   where +Y extends upward from the table.
  */
 
-export function buildHologramEntity(markerId) {
+if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
+  AFRAME.registerComponent('gltf-clips', {
+    init() {
+      this.mixer = null;
+      this.clips = [];
+      this.actions = [];
+      this.activeIndex = 0; // -1 = all tracks, >= 0 = single track index
+      this.isPlaying = true;
+
+      this.el.addEventListener('model-loaded', (e) => {
+        const model = e.detail?.model;
+        if (!model || !Array.isArray(model.animations) || model.animations.length === 0) return;
+
+        this.clips = model.animations;
+        this.mixer = new THREE.AnimationMixer(model);
+        this.actions = this.clips.map((clip) => this.mixer.clipAction(clip));
+        this.playClip(0);
+
+        window.dispatchEvent(new CustomEvent('gltf-clips-loaded'));
+      });
+    },
+    getTrackNames() {
+      return this.clips.map((c, idx) => c.name || `Track ${idx + 1}`);
+    },
+    playClip(index) {
+      if (!this.mixer || this.actions.length === 0) return;
+      this.activeIndex = index;
+      this.isPlaying = true;
+      this.actions.forEach((action, idx) => {
+        if (index === -1 || idx === index) {
+          action.enabled = true;
+          action.paused = false;
+          action.reset().play();
+        } else {
+          action.stop();
+        }
+      });
+    },
+    togglePlayPause() {
+      if (!this.mixer || this.actions.length === 0) return false;
+      this.isPlaying = !this.isPlaying;
+      this.actions.forEach((action, idx) => {
+        if (this.activeIndex === -1 || idx === this.activeIndex) {
+          action.paused = !this.isPlaying;
+        }
+      });
+      return this.isPlaying;
+    },
+    tick(time, timeDelta) {
+      if (this.mixer && this.isPlaying) this.mixer.update(timeDelta / 1000);
+    },
+    remove() {
+      if (this.mixer) {
+        this.mixer.stopAllAction();
+        this.mixer = null;
+      }
+    },
+  });
+}
+
+function buildProceduralFallback(markerId) {
   const root = document.createElement('a-entity');
   root.setAttribute('position', '0 0.08 0');
 
   if (markerId === 'pagtanow') {
-    // 1. PagtaNOW: Floating Futures Crystal Globe + Orbiting Foresight Ring
     const pedestal = document.createElement('a-cylinder');
     pedestal.setAttribute('radius', '0.32');
     pedestal.setAttribute('height', '0.12');
@@ -28,7 +93,6 @@ export function buildHologramEntity(markerId) {
     );
     root.appendChild(globe);
 
-    // Inner Golden Core (Community Horizon)
     const core = document.createElement('a-dodecahedron');
     core.setAttribute('radius', '0.2');
     core.setAttribute('position', '0 0.58 0');
@@ -39,7 +103,6 @@ export function buildHologramEntity(markerId) {
     );
     root.appendChild(core);
 
-    // Orbiting Signal Ring
     const ring = document.createElement('a-torus');
     ring.setAttribute('radius', '0.58');
     ring.setAttribute('radius-tubular', '0.02');
@@ -52,7 +115,6 @@ export function buildHologramEntity(markerId) {
     );
     root.appendChild(ring);
   } else if (markerId === 'talampad') {
-    // 2. TALAMPAD: Animated 3D Scales of Justice & Oblation Torch Pillar
     const pillar = document.createElement('a-cylinder');
     pillar.setAttribute('radius', '0.08');
     pillar.setAttribute('height', '0.85');
@@ -72,37 +134,29 @@ export function buildHologramEntity(markerId) {
     );
     root.appendChild(flame);
 
-    // Balance Beam (Interactive tilt target)
-    const beamGroup = document.createElement('a-entity');
-    beamGroup.setAttribute('id', 'talampad-beam-3d');
-    beamGroup.setAttribute('position', '0 0.74 0');
-
     const beam = document.createElement('a-box');
     beam.setAttribute('width', '0.96');
     beam.setAttribute('height', '0.05');
     beam.setAttribute('depth', '0.06');
+    beam.setAttribute('position', '0 0.74 0');
     beam.setAttribute('color', '#FFD147');
-    beamGroup.appendChild(beam);
+    root.appendChild(beam);
 
     const leftPan = document.createElement('a-cylinder');
     leftPan.setAttribute('radius', '0.16');
     leftPan.setAttribute('height', '0.04');
-    leftPan.setAttribute('position', '-0.44 -0.18 0');
+    leftPan.setAttribute('position', '-0.44 0.56 0');
     leftPan.setAttribute('color', '#D63629');
-    beamGroup.appendChild(leftPan);
+    root.appendChild(leftPan);
 
     const rightPan = document.createElement('a-cylinder');
     rightPan.setAttribute('radius', '0.16');
     rightPan.setAttribute('height', '0.04');
-    rightPan.setAttribute('position', '0.44 -0.18 0');
+    rightPan.setAttribute('position', '0.44 0.56 0');
     rightPan.setAttribute('color', '#2B7A78');
-    beamGroup.appendChild(rightPan);
-
-    root.appendChild(beamGroup);
+    root.appendChild(rightPan);
   } else if (markerId === 'gameon') {
-    // 3. goVRnance: Rotating 3D Governance Die + Holographic Orbit Ring
     const die = document.createElement('a-box');
-    die.setAttribute('id', 'govrnance-die-3d');
     die.setAttribute('width', '0.46');
     die.setAttribute('height', '0.46');
     die.setAttribute('depth', '0.46');
@@ -122,7 +176,6 @@ export function buildHologramEntity(markerId) {
     halo.setAttribute('color', '#FFD147');
     root.appendChild(halo);
   } else {
-    // 4. Lingkod Bayani: Illuminated Golden Torch & Rising Sunburst
     const base = document.createElement('a-cylinder');
     base.setAttribute('radius', '0.24');
     base.setAttribute('height', '0.44');
@@ -150,4 +203,51 @@ export function buildHologramEntity(markerId) {
   }
 
   return root;
+}
+
+/**
+ * Builds the 3D entity for either MindAR live tracking ('ar') or the 3D Simulator ('sim').
+ */
+export function buildHologramEntity(asset, mode = 'sim') {
+  const isAr = mode === 'ar';
+  const pos = isAr ? (asset?.arPosition || '0 0 0.05') : (asset?.simPosition || '0 0.05 0');
+  const rot = isAr ? (asset?.arRotation || '90 0 0') : (asset?.simRotation || '0 0 0');
+  const scl = isAr ? (asset?.arScale || '0.5 0.5 0.5') : (asset?.simScale || '0.5 0.5 0.5');
+
+  const wrapper = document.createElement('a-entity');
+  wrapper.setAttribute('position', pos);
+  wrapper.setAttribute('rotation', rot);
+
+  if (asset && asset.hasCustomModel && asset.modelUrl) {
+    const gltfEntity = document.createElement('a-entity');
+    gltfEntity.classList.add('hologram-spin-target');
+    gltfEntity.setAttribute('gltf-model', `url(${asset.modelUrl})`);
+    gltfEntity.setAttribute('gltf-clips', '');
+    gltfEntity.setAttribute('scale', scl);
+
+    if (asset.autoSpin !== false) {
+      gltfEntity.setAttribute(
+        'animation',
+        'property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear'
+      );
+    }
+
+    gltfEntity.addEventListener('model-error', () => {
+      console.warn(`[PAG-IWAG AR] Failed to decode ${asset.modelUrl}, using procedural hologram.`);
+      wrapper.innerHTML = '';
+      const fallback = buildProceduralFallback(asset.id);
+      if (isAr) fallback.setAttribute('scale', scl);
+      wrapper.appendChild(fallback);
+    });
+
+    wrapper.appendChild(gltfEntity);
+    return wrapper;
+  }
+
+  const fallback = buildProceduralFallback(asset ? asset.id : 'pagtanow');
+  if (isAr) {
+    fallback.setAttribute('scale', scl);
+  }
+  wrapper.appendChild(fallback);
+  return wrapper;
 }

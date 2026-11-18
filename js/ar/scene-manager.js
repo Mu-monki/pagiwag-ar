@@ -1,5 +1,5 @@
 /**
- * AR.js Live Scene Manager & Interactive No-Camera 3D Sticker Simulator
+ * MindAR Image Tracking Scene Manager & Interactive No-Camera 3D Simulator
  */
 
 import { buildHologramEntity } from './holograms.js';
@@ -13,9 +13,10 @@ export class SceneManager {
     this.onCameraReady = onCameraReady;
     this.onCameraError = onCameraError;
     this.mode = null; // 'live' | 'sim'
-    this.activeSimMarker = 'pagtanow';
-    this.compiledAssets = null;
+    this.activeSimMarker = null;
+    this.compiledBundle = null;
     this.videoWatchdog = null;
+    this.activeTargets = new Set();
     this.orbitState = {
       isDragging: false,
       lastX: 0,
@@ -31,10 +32,21 @@ export class SceneManager {
       this.videoWatchdog = null;
     }
 
+    this.activeTargets.clear();
+
+    // Stop MindAR system cleanly if running
+    const existingScene = this.mountEl.querySelector('a-scene');
+    if (existingScene && existingScene.systems && existingScene.systems['mindar-image-system']) {
+      try {
+        existingScene.systems['mindar-image-system'].stop();
+      } catch {
+        // Ignore stop errors during teardown
+      }
+    }
+
     document.documentElement.classList.remove('ar-live-mode');
     document.body.classList.remove('ar-live-mode');
 
-    // Stop any lingering video streams created by AR.js
     const videos = document.querySelectorAll('video');
     videos.forEach((v) => {
       if (v.srcObject) {
@@ -46,63 +58,77 @@ export class SceneManager {
   }
 
   /**
-   * Mounts Live AR.js Webcam Scene with transparent WebGL canvas & all 4 custom .patt markers
+   * Mounts Live MindAR Webcam Scene using a single compiled `stickers.mind` bundle
    */
-  mountLiveAR(compiledAssets) {
-    this.compiledAssets = compiledAssets;
+  mountLiveAR(compiledBundle) {
+    this.compiledBundle = compiledBundle;
+
+    if (!compiledBundle.hasMindBundle) {
+      if (this.onCameraError) {
+        this.onCameraError(
+          'Compiled stickers.mind not found in marker_patterns/ yet — opened Interactive 3D Simulator.'
+        );
+      }
+      return;
+    }
+
     this.clearScene();
     this.mode = 'live';
 
-    // Ensure html, body, workspace & WebGL canvas stay transparent so #arjs-video is visible
     document.documentElement.classList.add('ar-live-mode');
     document.body.classList.add('ar-live-mode');
 
     const scene = document.createElement('a-scene');
-    scene.setAttribute('embedded', '');
     scene.setAttribute(
-      'arjs',
-      'sourceType: webcam; debugUIEnabled: false; detectionMode: mono; patternRatio: 0.70;'
+      'mindar-image',
+      `imageTargetSrc: ${compiledBundle.resolvedMindUrl}; maxTrack: ${compiledBundle.maxTrack}; uiLoading: no; uiScanning: no; uiError: no;`
     );
+    scene.setAttribute('color-space', 'sRGB');
+    scene.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights, alpha: true');
     scene.setAttribute('vr-mode-ui', 'enabled: false');
-    scene.setAttribute(
-      'renderer',
-      'alpha: true; antialias: true; logarithmicDepthBuffer: true; colorManagement: true;'
-    );
+    scene.setAttribute('device-orientation-permission-ui', 'enabled: false');
 
-    Object.values(compiledAssets).forEach((asset) => {
-      const marker = document.createElement('a-marker');
-      marker.setAttribute('type', 'pattern');
-      marker.setAttribute('url', asset.pattDataUri);
-      marker.setAttribute('emitevents', 'true');
-      marker.setAttribute('smooth', 'true');
-      marker.setAttribute('smoothCount', '5');
+    const cam = document.createElement('a-camera');
+    cam.setAttribute('position', '0 0 0');
+    cam.setAttribute('look-controls', 'enabled: false');
+    scene.appendChild(cam);
 
-      const hologram = buildHologramEntity(asset.id);
-      marker.appendChild(hologram);
+    const assetsList = Object.values(compiledBundle.items);
+    assetsList.forEach((asset, idx) => {
+      const targetIndex = Number.isInteger(asset.targetIndex) ? asset.targetIndex : idx;
 
-      marker.addEventListener('markerFound', () => {
+      const targetAnchor = document.createElement('a-entity');
+      targetAnchor.setAttribute('mindar-image-target', `targetIndex: ${targetIndex}`);
+
+      const hologram = buildHologramEntity(asset, 'ar');
+      targetAnchor.appendChild(hologram);
+
+      targetAnchor.addEventListener('targetFound', () => {
+        this.activeTargets.add(asset.id);
         audioFX.playMarkerLock();
         if (this.onMarkerDetected) this.onMarkerDetected(asset.id);
       });
 
-      marker.addEventListener('markerLost', () => {
-        if (this.onMarkerLost) this.onMarkerLost(asset.id);
+      targetAnchor.addEventListener('targetLost', () => {
+        this.activeTargets.delete(asset.id);
+        if (this.activeTargets.size === 0) {
+          if (this.onMarkerLost) this.onMarkerLost(asset.id);
+        } else {
+          const remainingId = Array.from(this.activeTargets).pop();
+          if (this.onMarkerDetected) this.onMarkerDetected(remainingId);
+        }
       });
 
-      scene.appendChild(marker);
+      scene.appendChild(targetAnchor);
     });
 
-    const cam = document.createElement('a-entity');
-    cam.setAttribute('camera', '');
-    scene.appendChild(cam);
-
-    const handleVideoReady = () => {
+    const handleReady = () => {
       if (this.mode !== 'live') return;
       if (this.videoWatchdog) {
         clearTimeout(this.videoWatchdog);
         this.videoWatchdog = null;
       }
-      // Force AR.js to recalculate viewport dimensions once video stream attaches
+      audioFX.playCameraReady();
       window.dispatchEvent(new Event('resize'));
       if (this.onCameraReady) this.onCameraReady();
     };
@@ -120,37 +146,39 @@ export class SceneManager {
       }
     };
 
-    window.addEventListener('arjs-video-loaded', handleVideoReady, { once: true });
-    scene.addEventListener('camera-error', () => handleCameraFailure(), { once: true });
-    window.addEventListener(
-      'pagiwag:ar-alert',
+    scene.addEventListener('arReady', handleReady, { once: true });
+    scene.addEventListener(
+      'arError',
       (e) => {
-        if (this.mode === 'live' && /webcam|camera|permission|media/i.test(e.detail)) {
-          handleCameraFailure(e.detail);
-        }
+        const errDetail = e?.detail?.error || 'MindAR failed to start camera';
+        handleCameraFailure(`${errDetail} — switched to Interactive 3D Simulator.`);
       },
       { once: true }
     );
 
     this.mountEl.appendChild(scene);
 
-    // Watchdog: verify an active <video> stream appears within 8 seconds
+    // Watchdog in case camera permissions stall silently
     this.videoWatchdog = setTimeout(() => {
-      const vid = document.getElementById('arjs-video') || document.querySelector('video');
+      const vid = document.querySelector('video');
       if (vid && vid.srcObject && vid.readyState >= 2) {
-        handleVideoReady();
+        handleReady();
       } else {
         handleCameraFailure('Camera stream did not start in time — switched to Interactive 3D Simulator.');
       }
-    }, 8000);
+    }, 9000);
   }
 
   /**
    * Mounts Interactive No-Camera 3D Simulator with drag-to-orbit tabletop preview
    */
-  mountSimulator(compiledAssets, initialMarkerId = 'pagtanow') {
-    this.compiledAssets = compiledAssets;
-    this.activeSimMarker = initialMarkerId;
+  mountSimulator(compiledBundle, initialMarkerId = null) {
+    this.compiledBundle = compiledBundle;
+    const items = compiledBundle.items;
+    const keys = Object.keys(items);
+    const startId = initialMarkerId && items[initialMarkerId] ? initialMarkerId : keys[0];
+    this.activeSimMarker = startId;
+
     this.clearScene();
     this.mode = 'sim';
 
@@ -159,20 +187,18 @@ export class SceneManager {
     scene.setAttribute('vr-mode-ui', 'enabled: false');
     scene.setAttribute('background', 'color: #0D254C');
 
-    // Lighting
     const ambient = document.createElement('a-light');
     ambient.setAttribute('type', 'ambient');
     ambient.setAttribute('color', '#FFFDF7');
-    ambient.setAttribute('intensity', '0.85');
+    ambient.setAttribute('intensity', '0.9');
     scene.appendChild(ambient);
 
     const dirLight = document.createElement('a-light');
     dirLight.setAttribute('type', 'directional');
     dirLight.setAttribute('position', '2 4 3');
-    dirLight.setAttribute('intensity', '0.9');
+    dirLight.setAttribute('intensity', '0.95');
     scene.appendChild(dirLight);
 
-    // Orbit Pivot Stage
     const stage = document.createElement('a-entity');
     stage.setAttribute('id', 'sim-stage');
     stage.setAttribute('position', '0 0.1 -2.1');
@@ -181,7 +207,6 @@ export class SceneManager {
       `${this.orbitState.rotX} ${this.orbitState.rotY} 0`
     );
 
-    // Tabletop Base Disc
     const tableDisc = document.createElement('a-cylinder');
     tableDisc.setAttribute('radius', '1.15');
     tableDisc.setAttribute('height', '0.06');
@@ -189,28 +214,24 @@ export class SceneManager {
     tableDisc.setAttribute('color', '#1B4988');
     stage.appendChild(tableDisc);
 
-    // Sticker Marker Card Plane
+    // Transparent alphaTest plane so die-cut / circular borderless stickers render cleanly
     const stickerPlane = document.createElement('a-plane');
     stickerPlane.setAttribute('id', 'sim-sticker-plane');
     stickerPlane.setAttribute('width', '1.25');
     stickerPlane.setAttribute('height', '1.25');
     stickerPlane.setAttribute('rotation', '-90 0 0');
     stickerPlane.setAttribute('position', '0 0.005 0');
-    stickerPlane.setAttribute(
-      'src',
-      compiledAssets[initialMarkerId].previewDataUrl
-    );
+    stickerPlane.setAttribute('material', 'transparent: true; alphaTest: 0.1;');
+    stickerPlane.setAttribute('src', items[startId].previewDataUrl);
     stage.appendChild(stickerPlane);
 
-    // Hologram Container
     const holoSlot = document.createElement('a-entity');
     holoSlot.setAttribute('id', 'sim-hologram-slot');
-    holoSlot.appendChild(buildHologramEntity(initialMarkerId));
+    holoSlot.appendChild(buildHologramEntity(items[startId], 'sim'));
     stage.appendChild(holoSlot);
 
     scene.appendChild(stage);
 
-    // Fixed Camera
     const cam = document.createElement('a-entity');
     cam.setAttribute('camera', 'active: true');
     cam.setAttribute('position', '0 1.25 0.4');
@@ -221,23 +242,24 @@ export class SceneManager {
     this.attachOrbitControls(stage);
 
     if (this.onMarkerDetected) {
-      this.onMarkerDetected(initialMarkerId);
+      this.onMarkerDetected(startId);
     }
   }
 
   switchSimulatorMarker(markerId) {
-    if (this.mode !== 'sim' || !this.compiledAssets[markerId]) return;
+    if (this.mode !== 'sim' || !this.compiledBundle?.items?.[markerId]) return;
     this.activeSimMarker = markerId;
+    const asset = this.compiledBundle.items[markerId];
 
     const plane = document.getElementById('sim-sticker-plane');
     const slot = document.getElementById('sim-hologram-slot');
 
     if (plane) {
-      plane.setAttribute('src', this.compiledAssets[markerId].previewDataUrl);
+      plane.setAttribute('src', asset.previewDataUrl);
     }
     if (slot) {
       slot.innerHTML = '';
-      slot.appendChild(buildHologramEntity(markerId));
+      slot.appendChild(buildHologramEntity(asset, 'sim'));
     }
 
     audioFX.playMarkerLock();
@@ -286,31 +308,5 @@ export class SceneManager {
       if (e.touches[0]) onMove(e.touches[0].clientX, e.touches[0].clientY);
     };
     this.mountEl.ontouchend = onUp;
-  }
-
-  /**
-   * Updates interactive 3D hologram state (e.g., tilting TALAMPAD scales or spinning goVRnance die)
-   */
-  tiltTalampadScales(tiltRadians) {
-    const beam = document.getElementById('talampad-beam-3d');
-    if (beam) {
-      const deg = Math.round((tiltRadians * 180) / Math.PI);
-      beam.setAttribute(
-        'animation',
-        `property: rotation; to: 0 0 ${deg}; dur: 450; easing: easeOutElastic`
-      );
-    }
-  }
-
-  spinGovernanceDie() {
-    const die = document.getElementById('govrnance-die-3d');
-    if (die) {
-      const rx = 360 * (1 + Math.floor(Math.random() * 2));
-      const ry = 360 * (1 + Math.floor(Math.random() * 2));
-      die.setAttribute(
-        'animation',
-        `property: rotation; to: ${rx} ${ry} 90; dur: 900; easing: easeOutCubic`
-      );
-    }
   }
 }

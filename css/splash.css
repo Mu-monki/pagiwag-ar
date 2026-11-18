@@ -178,15 +178,38 @@
 .asset-chip {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   padding: 5px 8px;
   border-radius: var(--radius-sm);
   background: var(--cream-bg);
   border: 1.5px solid rgba(13, 37, 76, 0.2);
   color: var(--ink-muted);
   transition: all 0.2s ease;
+}
+
+.asset-chip-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.asset-chip-left span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-chip-tag {
+  font-size: 0.58rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(13, 37, 76, 0.08);
+  color: var(--navy-deep);
+  flex-shrink: 0;
 }
 
 .chip-dot {
@@ -206,6 +229,17 @@
 
 .asset-chip.ready .chip-dot {
   background: var(--teal-civic);
+}
+
+.asset-chip.sim-only {
+  background: #FFFBEB;
+  border-color: var(--gold-torch);
+  color: var(--navy-deep);
+  font-weight: 600;
+}
+
+.asset-chip.sim-only .chip-dot {
+  background: var(--gold-torch);
 }
 
 /* Action Buttons */

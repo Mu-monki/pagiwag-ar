@@ -11,7 +11,7 @@
   z-index: 2;
 }
 
-/* In Live AR mode, make workspace & scene transparent so the webcam <video> shows through */
+/* In Live AR mode, make workspace & scene transparent so MindAR's webcam <video> shows through */
 body.ar-live-mode .ar-workspace,
 body.ar-live-mode .scene-mount,
 body.ar-live-mode a-scene,
@@ -20,8 +20,8 @@ body.ar-live-mode .a-canvas {
   background-color: transparent !important;
 }
 
-/* Force AR.js injected webcam <video> to render full-screen behind the transparent 3D canvas */
-#arjs-video,
+/* Ensure MindAR / A-Frame injected webcam <video> renders cleanly behind the 3D canvas */
+.scene-mount video,
 body > video {
   position: fixed !important;
   top: 0 !important;
@@ -34,9 +34,6 @@ body > video {
   z-index: 1 !important;
   margin: 0 !important;
   padding: 0 !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }
 
 .scene-mount {
@@ -47,13 +44,22 @@ body > video {
   z-index: 3;
 }
 
-/* Ensure A-Frame video & canvas fill viewport cleanly */
+/* Ensure A-Frame canvas fills viewport cleanly above video */
 .scene-mount a-scene,
 .scene-mount canvas {
   width: 100% !important;
   height: 100% !important;
   position: absolute !important;
   inset: 0 !important;
+  z-index: 2 !important;
+}
+
+/* Hide any default MindAR overlay elements just in case */
+.mindar-ui-overlay,
+.mindar-ui-loading,
+.mindar-ui-scanning,
+.mindar-ui-compatibility {
+  display: none !important;
 }
 
 /* Top HUD Bar */
@@ -93,6 +99,7 @@ body > video {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .hud-title {
@@ -254,7 +261,7 @@ body > video {
   box-shadow: 0 3px 0 var(--navy-deep);
 }
 
-/* Bottom Interactive Capacity Development Drawer */
+/* Bottom Sticker & 3D Model Info Drawer */
 .activity-drawer {
   position: absolute;
   left: 12px;
@@ -320,6 +327,7 @@ body > video {
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .activity-drawer:not(.collapsed) .drawer-expand-btn {
@@ -328,11 +336,11 @@ body > video {
 
 .drawer-body {
   padding: 14px 16px 16px;
-  max-height: 48vh;
+  max-height: 44vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .activity-drawer.collapsed .drawer-body {
@@ -345,23 +353,33 @@ body > video {
   line-height: 1.45;
 }
 
-/* Interactive Sub-Components inside Drawer */
 .activity-desc {
-  font-size: 0.83rem;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  line-height: 1.48;
   color: var(--ink-dark);
 }
 
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.callout-box {
+  background: var(--cream-card);
+  border: 2px solid var(--navy-deep);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
-.choice-pill {
+.drawer-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.drawer-mini-btn {
   font-family: var(--font-sans);
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 800;
   padding: 6px 12px;
   border-radius: 999px;
   border: 1.5px solid var(--navy-deep);
@@ -370,108 +388,12 @@ body > video {
   cursor: pointer;
 }
 
-.choice-pill.active {
-  background: var(--navy-primary);
-  color: #FFFFFF;
-}
-
-.signal-card-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.signal-arch-card {
-  padding: 10px;
-  border-radius: 14px 14px 6px 6px;
-  border: 2px solid var(--navy-deep);
-  color: #FFFFFF;
-  text-align: left;
-  cursor: pointer;
-  transition: transform 0.14s ease;
-}
-
-.signal-arch-card:hover {
-  transform: translateY(-2px);
-}
-
-.signal-arch-card small {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  opacity: 0.9;
-}
-
-.signal-arch-card strong {
-  display: block;
-  font-size: 0.8rem;
-  margin-top: 3px;
-}
-
-.callout-box {
-  background: var(--cream-card);
-  border: 2px solid var(--navy-deep);
-  border-radius: var(--radius-md);
-  padding: 11px 13px;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.dilemma-options {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.dilemma-btn {
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--navy-deep);
-  background: var(--cream-card);
-  color: var(--ink-dark);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dilemma-btn:hover {
-  background: rgba(246, 168, 33, 0.22);
-}
-
-.pledge-form {
-  display: flex;
-  gap: 8px;
-}
-
-.pledge-input {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--navy-deep);
-  background: var(--cream-card);
-  font-family: var(--font-sans);
-  font-size: 0.84rem;
-}
-
-.lingkod-stamp {
-  text-align: center;
-  padding: 12px;
-  border: 3px double var(--coral-red);
-  border-radius: var(--radius-md);
-  background: #FFFDF7;
-}
-
-.lingkod-stamp .stamp-main {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.2rem;
-  color: var(--navy-primary);
-  letter-spacing: 0.03em;
+.drawer-mini-btn:hover {
+  background: var(--gold-torch);
 }
 
 /* =========================================================
-   STICKER MARKER KIT MODAL
+   BORDERLESS STICKER KIT MODAL
    ========================================================= */
 .modal-backdrop {
   position: fixed;
@@ -541,8 +463,9 @@ body > video {
   width: 100%;
   max-width: 170px;
   aspect-ratio: 1 / 1;
-  border-radius: 6px;
-  border: 1px solid rgba(13, 37, 76, 0.2);
+  border-radius: 12px;
+  border: 1.5px dashed rgba(13, 37, 76, 0.25);
+  background: #FFFFFF;
 }
 
 .kit-item h3 {
