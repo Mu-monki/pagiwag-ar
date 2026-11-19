@@ -15,7 +15,8 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
       this.clips = [];
       this.actions = [];
       this.activeIndex = 0; // -1 = all tracks, >= 0 = single track index
-      this.isPlaying = true;
+      // this.isPlaying = true;
+      this.clipsPlaying = true;
 
       this.el.addEventListener('model-loaded', (e) => {
         const model = e.detail?.model;
@@ -35,7 +36,8 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
     playClip(index) {
       if (!this.mixer || this.actions.length === 0) return;
       this.activeIndex = index;
-      this.isPlaying = true;
+      // this.isPlaying = true;
+      this.clipsPlaying = true;
       this.actions.forEach((action, idx) => {
         if (index === -1 || idx === index) {
           action.enabled = true;
@@ -48,16 +50,17 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
     },
     togglePlayPause() {
       if (!this.mixer || this.actions.length === 0) return false;
-      this.isPlaying = !this.isPlaying;
+      // this.isPlaying = !this.isPlaying;
+      this.clipsPlaying = !this.clipsPlaying;
       this.actions.forEach((action, idx) => {
         if (this.activeIndex === -1 || idx === this.activeIndex) {
-          action.paused = !this.isPlaying;
+          action.paused = !this.clipsPlaying;
         }
       });
-      return this.isPlaying;
+      return this.clipsPlaying;
     },
     tick(time, timeDelta) {
-      if (this.mixer && this.isPlaying) this.mixer.update(timeDelta / 1000);
+      if (this.mixer && this.clipsPlaying) this.mixer.update(timeDelta / 1000);
     },
     remove() {
       if (this.mixer) {
@@ -255,6 +258,7 @@ export function buildHologramEntity(asset, mode = 'sim') {
 
   if (asset && asset.hasCustomModel && asset.modelUrl) {
     const gltfEntity = document.createElement('a-entity');
+    gltfEntity.dataset.markerId = asset.id;
     gltfEntity.classList.add('hologram-spin-target');
     gltfEntity.setAttribute('gltf-model', `url(${asset.modelUrl})`);
     gltfEntity.setAttribute('gltf-clips', '');

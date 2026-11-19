@@ -41,7 +41,14 @@ export class ActivityDrawer {
   }
 
   getActiveClipControllers() {
-    return Array.from(document.querySelectorAll('.hologram-spin-target'))
+    const targets = Array.from(document.querySelectorAll('.hologram-spin-target'));
+    const hasMarkerTags = targets.some((el) => Boolean(el.dataset.markerId));
+    const scopedTargets =
+      this.activeMarkerId && hasMarkerTags
+        ? targets.filter((el) => el.dataset.markerId === this.activeMarkerId)
+        : targets;
+
+    return scopedTargets
       .map((el) => el.components?.['gltf-clips'])
       .filter((ctrl) => ctrl && ctrl.clips && ctrl.clips.length > 0);
   }
@@ -58,7 +65,7 @@ export class ActivityDrawer {
         <div class="drawer-meta-row" style="margin-bottom: 8px;">
           <strong>🎬 Animation Tracks (${tracks.length})</strong>
           <button id="btn-anim-playpause" class="drawer-mini-btn" type="button">
-            ${primaryCtrl.isPlaying ? '⏸ Pause' : '▶️ Play'}
+            ${primaryCtrl.clipsPlaying ? '⏸ Pause' : '▶️ Play'}
           </button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
