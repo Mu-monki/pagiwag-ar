@@ -205,6 +205,41 @@ function buildProceduralFallback(markerId) {
   return root;
 }
 
+function attachFloatingStickers(wrapper, urls = []) {
+  if (!Array.isArray(urls) || urls.length === 0) return;
+
+  const ring = document.createElement('a-entity');
+  ring.setAttribute(
+    'animation',
+    'property: rotation; to: 0 360 0; loop: true; dur: 22000; easing: linear'
+  );
+
+  const radius = 0.62;
+  urls.forEach((src, i) => {
+    const angle = (i / urls.length) * Math.PI * 2;
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    const baseY = 0.58 + (i % 2 === 0 ? 0.06 : -0.04);
+    const rotY = (-angle * 180) / Math.PI + 90;
+
+    const card = document.createElement('a-plane');
+    card.setAttribute('src', src);
+    card.setAttribute('width', '0.26');
+    card.setAttribute('height', '0.26');
+    card.setAttribute('position', `${x.toFixed(3)} ${baseY.toFixed(3)} ${z.toFixed(3)}`);
+    card.setAttribute('rotation', `0 ${rotY.toFixed(1)} 0`);
+    card.setAttribute('material', 'transparent: true; alphaTest: 0.1; side: double; shader: flat;');
+    card.setAttribute(
+      'animation',
+      `property: position; dir: alternate; loop: true; dur: ${1800 + (i % 4) * 250}; easing: easeInOutSine; to: ${x.toFixed(3)} ${(baseY + 0.08).toFixed(3)} ${z.toFixed(3)}`
+    );
+
+    ring.appendChild(card);
+  });
+
+  wrapper.appendChild(ring);
+}
+
 /**
  * Builds the 3D entity for either MindAR live tracking ('ar') or the 3D Simulator ('sim').
  */
@@ -241,6 +276,7 @@ export function buildHologramEntity(asset, mode = 'sim') {
     });
 
     wrapper.appendChild(gltfEntity);
+    attachFloatingStickers(wrapper, asset?.floatingStickers);
     return wrapper;
   }
 

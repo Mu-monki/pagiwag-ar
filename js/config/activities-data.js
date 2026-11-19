@@ -52,7 +52,18 @@ export const STICKER_MARKERS = [
     simScale: '0.5 0.5 0.5',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
-    autoSpin: false,
+    // autoSpin: false,
+    autoSpin: true,
+    floatingStickers: [
+      './marker_patterns/pagtanow_cards/smile.png',
+      './marker_patterns/pagtanow_cards/smile_with_teeth.png',
+      './marker_patterns/pagtanow_cards/sadt_with_cry.png',
+      './marker_patterns/pagtanow_cards/sadt.png',
+      './marker_patterns/pagtanow_cards/no_baka_meron.png',
+      './marker_patterns/pagtanow_cards/no_deins_wala.png',
+      './marker_patterns/pagtanow_cards/yes_may_hangganan.png',
+      './marker_patterns/pagtanow_cards/yes_anything_possible.png',
+    ],
 
     description:
       'PagtaNOW trains student leaders and local bureaucrats to spot weak signals of change before crises strike across Philippine communities.',
