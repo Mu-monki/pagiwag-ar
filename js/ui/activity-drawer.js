@@ -63,7 +63,7 @@ export class ActivityDrawer {
         ? `
       <div class="callout-box" style="border-color: ${meta.accentColor || '#0D254C'};">
         <div class="drawer-meta-row" style="margin-bottom: 8px;">
-          <strong><i class="fa-solid fa-circle-play"></i> Actions (${tracks.length})</strong>
+          <strong><i class="fa-solid fa-circle-play"></i> Play Actions (${tracks.length})</strong>
           <button id="btn-anim-playpause" class="drawer-mini-btn" type="button">
             ${primaryCtrl.clipsPlaying ? '⏸ Pause' : '▶️ Play'}
           </button>
@@ -97,11 +97,14 @@ export class ActivityDrawer {
       </div>
       ${animControlsHtml}
       <div class="drawer-meta-row">
-        <span class="kicker-pill" style="background: ${meta.accentColor || '#1B4988'};">
-          TARGET INDEX #${meta.targetIndex ?? 0}
-        </span>
+        
       </div>
     `;
+
+    // TARGET INDEX INFO
+    // <span class="kicker-pill" style="background: ${meta.accentColor || '#1B4988'};">
+    //     TARGET INDEX #${meta.targetIndex ?? 0}
+    //   </span>
 
     // CHIME BUTTON
     // <button id="btn-replay-chime" class="drawer-mini-btn" type="button">🔔 Replay Chime</button>

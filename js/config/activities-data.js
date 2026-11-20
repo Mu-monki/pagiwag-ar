@@ -33,10 +33,10 @@ export const STICKER_MARKERS = [
     id: 'pagtanow',
     targetIndex: 0,
     icon: '<i class="fa-regular fa-gem"></i>',
-    name: 'PagtaNOW: Sense the Future',
+    name: 'PagtaNOW: Images of the Future',
     shortLabel: 'PagtaNOW',
-    category: 'CAPACITY DEV 01 • FUTURES SENSING',
-    tagline: 'Peering into the Future of Philippine Governance',
+    category: 'CAPACITY DEV 01 • FUTURES THINKING',
+    tagline: 'Peering into the Future of National and Local Governance',
     accentColor: '#2B7A78',
     secondaryColor: '#F6A821',
 
@@ -66,16 +66,16 @@ export const STICKER_MARKERS = [
     ],
 
     description:
-      'PagtaNOW trains student leaders and local bureaucrats to spot weak signals of change before crises strike across Philippine communities.',
+      'PagtaNOW is a game developed by the UP NCPAG GRIT Labs to explore a person’s perceptionof the future based on given prompts of scenarios.',
   },
   {
     id: 'talampad',
     targetIndex: 1,
     // icon: '⚖️',
     icon: '<i class="fa-solid fa-star-half-stroke"></i>',
-    name: 'TALAMPAD: Principled Accountability',
+    name: 'TALAMPAD: Civic Priorities & Principled Actions',
     shortLabel: 'TALAMPAD',
-    category: 'CAPACITY DEV 02 • INTEGRITY & LEADERSHIP',
+    category: 'CAPACITY DEV 02 • CIVIC PRIORITIES',
     tagline: 'Tracing Accountability: Leadership, Administration & Management through Principled Actions & Decisions',
     accentColor: '#D63629',
     secondaryColor: '#1B4988',
@@ -102,17 +102,17 @@ export const STICKER_MARKERS = [
     autoSpin: true,
 
     description:
-      'Championing ethical decision-making, public audit transparency, and whole-of-society integrity in public administration.',
+      'TALAMPAD is an interactive game designed to explore the underlying motivations, values, and priorities that influence individuals ethical decision-making.',
   },
   {
     id: 'GoVRnance',
     targetIndex: 2,
     // icon: '🎲',
     icon: '<i class="fa-solid fa-vr-cardboard"></i>',
-    name: 'PAG-IWAG GoVRnance',
+    name: 'GoVRnance: A Virtual Reality Simulation Experience on Public Sector Integrity and Accountability',
     shortLabel: 'GoVRnance',
-    category: 'CAPACITY DEV 03 • CIVIC CO-CREATION',
-    tagline: 'Gaming for Good Governance & Civic Co-Creation',
+    category: 'CAPACITY DEV 03 • ETHICAL DECISION-MAKING',
+    tagline: 'Serious Games for Ethical Judgement',
     accentColor: '#1B4988',
     secondaryColor: '#FFD147',
 
@@ -131,36 +131,36 @@ export const STICKER_MARKERS = [
     autoSpin: true,
 
     description:
-      'Interactive tabletop and VR governance simulations uniting State Universities and Colleges (SUCs) and local civil servants.',
+      'A capacity building Serious Game leveraging Virtual Reality to promote critical thinking and integrity in governance decision-making processes.',
   },
   {
-    id: 'kabataan',
+    id: 'PAG-IWAG Caravan',
     targetIndex: 3,
     // icon: '🔥',
     icon: '<i class="fa-solid fa-fire"></i>',
-    name: 'Ang Bukas: Lingkod Bayani',
-    shortLabel: 'Lingkod Bayani',
+    name: 'PAG-IWAG Caravan by UP NCPAG GRIT Labs',
+    shortLabel: 'PAG-IWAG Caravan',
     category: 'WHOLE-OF-SOCIETY COMMITMENT',
-    tagline: 'Kabataan Para sa Matapat na Pamahalaan',
+    tagline: '"Kasama ka sa Biyahe, Patungong PAG-IWAG!"',
     accentColor: '#F6A821',
     secondaryColor: '#0D254C',
 
     stickerImageUrl: './marker_patterns/kabataan.png',
-    modelUrl: './output_models/kabataan.glb',
+    modelUrl: './output_models/pagiwagjeep.glb',
 
     // Live MindAR centered coordinates
-    arScale: '0.5 0.5 0.5',
+    arScale: '1 1 1',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.5 0.5 0.5',
+    simScale: '1.5 1.5 1.5',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
-    autoSpin: true,
+    autoSpin: false,
 
     description:
-      'Public office is a position of TRUST, NOT of PRIVILEGE — illuminating a new generation of principled citizen-leaders.',
+      'PAG-IWAG is a nationwide knowledge-sharing and capacity-building caravan of the University of the Philippines National College of Public Administration and Governance (UP NCPAG) Governance Reform, Innovation and Transformation Research Collaboratories (GRIT Labs)',
   },
 
   /* =========================================================================

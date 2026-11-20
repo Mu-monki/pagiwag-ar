@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnToggleSfx.addEventListener('click', () => {
     const muted = audioFX.toggleMute();
-    btnToggleSfx.textContent = muted ? '🔇' : '🔊';
+    btnToggleSfx.innerHTML = muted ? '<i class="fa-solid fa-volume-xmark" style="color: #ff5555;"></i>' : '<i class="fa-solid fa-volume-high"></i>';
     btnToggleSfx.title = muted ? 'Unmute Sound Effects' : 'Mute Sound Effects';
   });
 
