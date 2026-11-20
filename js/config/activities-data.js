@@ -32,7 +32,7 @@ export const STICKER_MARKERS = [
   {
     id: 'pagtanow',
     targetIndex: 0,
-    icon: '🔮',
+    icon: '<i class="fa-regular fa-gem"></i>',
     name: 'PagtaNOW: Sense the Future',
     shortLabel: 'PagtaNOW',
     category: 'CAPACITY DEV 01 • FUTURES SENSING',
@@ -71,7 +71,8 @@ export const STICKER_MARKERS = [
   {
     id: 'talampad',
     targetIndex: 1,
-    icon: '⚖️',
+    // icon: '⚖️',
+    icon: '<i class="fa-solid fa-star-half-stroke"></i>',
     name: 'TALAMPAD: Principled Accountability',
     shortLabel: 'TALAMPAD',
     category: 'CAPACITY DEV 02 • INTEGRITY & LEADERSHIP',
@@ -80,7 +81,14 @@ export const STICKER_MARKERS = [
     secondaryColor: '#1B4988',
 
     stickerImageUrl: './marker_patterns/talampad.png',
-    modelUrl: './output_models/talampad.glb',
+    modelUrl: './output_models/rizalexport.glb',
+
+    // CONFIG FLAG
+    floatingConstellations: true,
+    count: 4,
+    starColor: '#FFD147', 
+    accentColor: '#93C5FD', 
+    lineColor: '#F6A821',
 
     // Live MindAR centered coordinates
     arScale: '0.5 0.5 0.5',
@@ -97,11 +105,12 @@ export const STICKER_MARKERS = [
       'Championing ethical decision-making, public audit transparency, and whole-of-society integrity in public administration.',
   },
   {
-    id: 'gameon',
+    id: 'GoVRnance',
     targetIndex: 2,
-    icon: '🎲',
-    name: 'PAG-IWAG Game On! (goVRnance)',
-    shortLabel: 'goVRnance',
+    // icon: '🎲',
+    icon: '<i class="fa-solid fa-vr-cardboard"></i>',
+    name: 'PAG-IWAG GoVRnance',
+    shortLabel: 'GoVRnance',
     category: 'CAPACITY DEV 03 • CIVIC CO-CREATION',
     tagline: 'Gaming for Good Governance & Civic Co-Creation',
     accentColor: '#1B4988',
@@ -127,7 +136,8 @@ export const STICKER_MARKERS = [
   {
     id: 'kabataan',
     targetIndex: 3,
-    icon: '🔥',
+    // icon: '🔥',
+    icon: '<i class="fa-solid fa-fire"></i>',
     name: 'Ang Bukas: Lingkod Bayani',
     shortLabel: 'Lingkod Bayani',
     category: 'WHOLE-OF-SOCIETY COMMITMENT',

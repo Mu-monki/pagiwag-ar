@@ -69,6 +69,310 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
       }
     },
   });
+
+  function createStarFlareTexture() {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const c = size / 2;
+
+  // Soft outer radial halo
+  const halo = ctx.createRadialGradient(c, c, 2, c, c, c);
+  halo.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  halo.addColorStop(0.22, 'rgba(255, 232, 150, 0.9)');
+  halo.addColorStop(0.55, 'rgba(246, 168, 33, 0.25)');
+  halo.addColorStop(1, 'rgba(246, 168, 33, 0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(0, 0, size, size);
+
+  // Crisp 4-point star flare
+  ctx.fillStyle = '#FFFFFF';
+  for (let i = 0; i < 2; i++) {
+    ctx.save();
+    ctx.translate(c, c);
+    ctx.rotate((i * Math.PI) / 2);
+    ctx.beginPath();
+    ctx.moveTo(0, -c * 0.92);
+    ctx.quadraticCurveTo(5, -5, c * 0.92, 0);
+    ctx.quadraticCurveTo(5, 5, 0, c * 0.92);
+    ctx.quadraticCurveTo(-5, 5, -c * 0.92, 0);
+    ctx.quadraticCurveTo(-5, -5, 0, -c * 0.92);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  if ('SRGBColorSpace' in THREE) {
+    texture.colorSpace = THREE.SRGBColorSpace;
+  }
+  return texture;
+}
+
+if (typeof AFRAME !== 'undefined' && !AFRAME.components['floating-constellations']) {
+  AFRAME.registerComponent('floating-constellations', {
+    schema: {
+      starColor: { type: 'color', default: '#FFD147' },
+      secondaryColor: { type: 'color', default: '#FFF6CC' },
+      lineColor: { type: 'color', default: '#93C5FD' },
+      radius: { type: 'number', default: 0.66 },
+      orbitSpeed: { type: 'number', default: 0.22 },
+    },
+
+    init() {
+      this.starTexture = createStarFlareTexture();
+      this.sharedOctaGeo = new THREE.OctahedronGeometry(1, 0);
+      this.clusters = [];
+      this.twinklers = [];
+      this.disposables = [this.sharedOctaGeo, this.starTexture];
+
+      this.rootGroup = new THREE.Group();
+
+      // 4 distinct constellation patterns orbiting the central model
+      const templates = [
+        // 1. Scales / Balance (TALAMPAD)
+        {
+          pts: [
+            [-0.16, 0.08, 0.0],
+            [0.0, 0.14, 0.02],
+            [0.16, 0.08, 0.0],
+            [0.0, -0.04, 0.02],
+            [-0.14, -0.1, -0.02],
+            [0.14, -0.1, -0.02],
+          ],
+          edges: [
+            [0, 1],
+            [1, 2],
+            [1, 3],
+            [0, 4],
+            [2, 5],
+          ],
+          baseY: 0.62,
+        },
+        // 2. Crown / Compass
+        {
+          pts: [
+            [0.0, 0.17, 0.0],
+            [-0.12, 0.04, 0.03],
+            [0.12, 0.04, -0.03],
+            [-0.08, -0.12, 0.02],
+            [0.08, -0.12, -0.02],
+          ],
+          edges: [
+            [0, 1],
+            [0, 2],
+            [1, 2],
+            [1, 3],
+            [2, 4],
+            [3, 4],
+          ],
+          baseY: 0.48,
+        },
+        // 3. Southern Cross / Torch
+        {
+          pts: [
+            [0.0, 0.18, 0.0],
+            [0.0, -0.16, 0.0],
+            [-0.13, 0.03, 0.02],
+            [0.13, 0.03, -0.02],
+            [0.09, -0.08, 0.04],
+          ],
+          edges: [
+            [0, 1],
+            [2, 3],
+            [3, 4],
+          ],
+          baseY: 0.68,
+        },
+        // 4. Dipper / Arc
+        {
+          pts: [
+            [-0.18, 0.1, 0.02],
+            [-0.07, 0.06, 0.0],
+            [0.03, 0.01, -0.02],
+            [0.05, -0.1, 0.02],
+            [0.17, -0.12, 0.0],
+            [0.18, 0.0, -0.02],
+          ],
+          edges: [
+            [0, 1],
+            [1, 2],
+            [2, 3],
+            [3, 4],
+            [4, 5],
+            [5, 2],
+          ],
+          baseY: 0.52,
+        },
+      ];
+
+      templates.forEach((tpl, idx) => {
+        const angle = (idx / templates.length) * Math.PI * 2;
+        const clusterGroup = new THREE.Group();
+        clusterGroup.position.set(
+          Math.cos(angle) * this.data.radius,
+          tpl.baseY,
+          Math.sin(angle) * this.data.radius
+        );
+        // Face each constellation outward around the ring
+        clusterGroup.rotation.y = -angle + Math.PI / 2;
+
+        // Constellation connecting lines
+        const lineVertices = [];
+        tpl.edges.forEach(([a, b]) => {
+          lineVertices.push(...tpl.pts[a], ...tpl.pts[b]);
+        });
+        const lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(lineVertices, 3));
+        const lineMat = new THREE.LineBasicMaterial({
+          color: this.data.lineColor,
+          transparent: true,
+          opacity: 0.58,
+          depthWrite: false,
+        });
+        const lines = new THREE.LineSegments(lineGeo, lineMat);
+        clusterGroup.add(lines);
+        this.disposables.push(lineGeo, lineMat);
+
+        // Star nodes
+        tpl.pts.forEach(([x, y, z], starIdx) => {
+          const isPrimary = starIdx % 2 === 0;
+          const color = isPrimary ? this.data.starColor : this.data.secondaryColor;
+          const baseCoreScale = isPrimary ? 0.018 : 0.013;
+          const baseSpriteScale = isPrimary ? 0.1 : 0.075;
+
+          const coreMat = new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0.95,
+          });
+          const core = new THREE.Mesh(this.sharedOctaGeo, coreMat);
+          core.position.set(x, y, z);
+          core.scale.setScalar(baseCoreScale);
+          clusterGroup.add(core);
+
+          const spriteMat = new THREE.SpriteMaterial({
+            map: this.starTexture,
+            color,
+            transparent: true,
+            opacity: 0.9,
+            depthWrite: false,
+          });
+          const sprite = new THREE.Sprite(spriteMat);
+          sprite.position.set(x, y, z);
+          sprite.scale.set(baseSpriteScale, baseSpriteScale, 1);
+          clusterGroup.add(sprite);
+
+          this.disposables.push(coreMat, spriteMat);
+          this.twinklers.push({
+            core,
+            sprite,
+            coreMat,
+            spriteMat,
+            baseCoreScale,
+            baseSpriteScale,
+            phase: idx * 1.7 + starIdx * 1.15,
+            speed: 2.2 + ((idx + starIdx) % 4) * 0.75,
+          });
+        });
+
+        this.rootGroup.add(clusterGroup);
+        this.clusters.push({
+          group: clusterGroup,
+          lineMat,
+          baseY: tpl.baseY,
+          phase: idx * 1.4,
+        });
+      });
+
+      // Ambient scattered twinkling micro-stars between constellations
+      const ambientCount = 16;
+      for (let i = 0; i < ambientCount; i++) {
+        const angle = (i / ambientCount) * Math.PI * 2 + 0.25;
+        const r = this.data.radius * (0.72 + (i % 3) * 0.18);
+        const y = 0.24 + ((i * 37) % 10) * 0.072;
+        const baseSpriteScale = 0.042 + (i % 3) * 0.014;
+
+        const spriteMat = new THREE.SpriteMaterial({
+          map: this.starTexture,
+          color: i % 2 === 0 ? this.data.secondaryColor : this.data.starColor,
+          transparent: true,
+          opacity: 0.8,
+          depthWrite: false,
+        });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.position.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
+        sprite.scale.set(baseSpriteScale, baseSpriteScale, 1);
+        this.rootGroup.add(sprite);
+
+        this.disposables.push(spriteMat);
+        this.twinklers.push({
+          core: null,
+          sprite,
+          coreMat: null,
+          spriteMat,
+          baseCoreScale: 0,
+          baseSpriteScale,
+          phase: i * 0.9,
+          speed: 2.8 + (i % 5) * 0.65,
+        });
+      }
+
+      this.el.setObject3D('constellations', this.rootGroup);
+    },
+
+    tick(time, timeDelta) {
+      if (!this.rootGroup) return;
+      const dt = Math.min((timeDelta || 16) / 1000, 0.1);
+      const t = (time || 0) / 1000;
+
+      // Orbit the constellation field gently around the 3D model
+      this.rootGroup.rotation.y += dt * this.data.orbitSpeed;
+
+      // Gentle vertical float + line shimmer per constellation
+      for (let i = 0; i < this.clusters.length; i++) {
+        const c = this.clusters[i];
+        c.group.position.y = c.baseY + Math.sin(t * 1.35 + c.phase) * 0.035;
+        c.lineMat.opacity = 0.42 + 0.22 * (0.5 + 0.5 * Math.sin(t * 1.8 + c.phase));
+      }
+
+      // Independent twinkling for each star & flare
+      for (let i = 0; i < this.twinklers.length; i++) {
+        const s = this.twinklers[i];
+        const pulse = 0.5 + 0.5 * Math.sin(t * s.speed + s.phase);
+        const twinkleScale = 0.55 + 0.65 * pulse;
+
+        s.sprite.scale.set(
+          s.baseSpriteScale * twinkleScale,
+          s.baseSpriteScale * twinkleScale,
+          1
+        );
+        s.spriteMat.opacity = 0.35 + 0.65 * pulse;
+
+        if (s.core && s.coreMat) {
+          s.core.scale.setScalar(s.baseCoreScale * (0.7 + 0.5 * pulse));
+          s.core.rotation.y += dt * 1.6;
+          s.coreMat.opacity = 0.55 + 0.45 * pulse;
+        }
+      }
+    },
+
+    remove() {
+      this.el.removeObject3D('constellations');
+      this.disposables.forEach((item) => {
+        if (item && typeof item.dispose === 'function') {
+          item.dispose();
+        }
+      });
+      this.disposables = [];
+      this.clusters = [];
+      this.twinklers = [];
+      this.rootGroup = null;
+    },
+  });
+}
 }
 
 function buildProceduralFallback(markerId) {
@@ -243,6 +547,28 @@ function attachFloatingStickers(wrapper, urls = []) {
   wrapper.appendChild(ring);
 }
 
+function attachFloatingConstellations(wrapper, config) {
+  if (!config) return;
+
+  const constellationEl = document.createElement('a-entity');
+  if (typeof config === 'object') {
+    const attrs = [
+      config.starColor ? `starColor: ${config.starColor}` : '',
+      config.secondaryColor ? `secondaryColor: ${config.secondaryColor}` : '',
+      config.lineColor ? `lineColor: ${config.lineColor}` : '',
+      config.radius ? `radius: ${config.radius}` : '',
+      config.orbitSpeed ? `orbitSpeed: ${config.orbitSpeed}` : '',
+    ]
+      .filter(Boolean)
+      .join('; ');
+    constellationEl.setAttribute('floating-constellations', attrs);
+  } else {
+    constellationEl.setAttribute('floating-constellations', '');
+  }
+
+  wrapper.appendChild(constellationEl);
+}
+
 /**
  * Builds the 3D entity for either MindAR live tracking ('ar') or the 3D Simulator ('sim').
  */
@@ -279,8 +605,11 @@ export function buildHologramEntity(asset, mode = 'sim') {
       wrapper.appendChild(fallback);
     });
 
+    // wrapper.appendChild(gltfEntity);
+    // attachFloatingStickers(wrapper, asset?.floatingStickers);
     wrapper.appendChild(gltfEntity);
     attachFloatingStickers(wrapper, asset?.floatingStickers);
+    attachFloatingConstellations(wrapper, asset?.floatingConstellations);
     return wrapper;
   }
 

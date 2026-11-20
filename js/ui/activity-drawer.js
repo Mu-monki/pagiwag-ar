@@ -29,7 +29,7 @@ export class ActivityDrawer {
 
     this.activeMarkerId = markerId;
     this.categoryEl.textContent = meta.category;
-    this.titleEl.textContent = `${meta.icon || '✨'} ${meta.name}`;
+    this.titleEl.textContent = `${meta.name}`;
     this.expand();
     this.render(meta);
   }
@@ -63,7 +63,7 @@ export class ActivityDrawer {
         ? `
       <div class="callout-box" style="border-color: ${meta.accentColor || '#0D254C'};">
         <div class="drawer-meta-row" style="margin-bottom: 8px;">
-          <strong>🎬 Animation Tracks (${tracks.length})</strong>
+          <strong><i class="fa-solid fa-circle-play"></i> Actions (${tracks.length})</strong>
           <button id="btn-anim-playpause" class="drawer-mini-btn" type="button">
             ${primaryCtrl.clipsPlaying ? '⏸ Pause' : '▶️ Play'}
           </button>
@@ -100,9 +100,11 @@ export class ActivityDrawer {
         <span class="kicker-pill" style="background: ${meta.accentColor || '#1B4988'};">
           TARGET INDEX #${meta.targetIndex ?? 0}
         </span>
-        <button id="btn-replay-chime" class="drawer-mini-btn" type="button">🔔 Replay Chime</button>
       </div>
     `;
+
+    // CHIME BUTTON
+    // <button id="btn-replay-chime" class="drawer-mini-btn" type="button">🔔 Replay Chime</button>
 
     this.bodyEl.querySelectorAll('[data-clip-idx]').forEach((btn) => {
       btn.addEventListener('click', () => {

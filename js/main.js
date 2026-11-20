@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     hudModeBadge.textContent = '3D SIMULATOR';
     hudModeBadge.className = 'hud-badge hud-badge--sim';
-    btnToggleMode.textContent = 'Try Live MindAR';
+    btnToggleMode.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i> Try Live AR';
 
     if (diagnosticMsg) {
       showDiagnostic(diagnosticMsg);

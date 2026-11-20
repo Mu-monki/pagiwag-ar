@@ -103,7 +103,7 @@ export function renderBorderlessFallbackCanvas(stickerId) {
     ctx.fillStyle = '#FFD147';
     ctx.font = 'bold 31px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('goVRnance', cx, 134);
+    ctx.fillText('GoVRnance', cx, 134);
   } else {
     ctx.fillStyle = '#F6A821';
     for (let i = 0; i < 8; i++) {
