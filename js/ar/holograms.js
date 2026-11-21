@@ -375,6 +375,195 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['floating-constellations
 }
 }
 
+if (typeof AFRAME !== 'undefined' && !AFRAME.components['floating-matrix']) {
+  AFRAME.registerComponent('floating-matrix', {
+    schema: {
+      color: { type: 'color', default: '#00FF66' },
+      headColor: { type: 'color', default: '#E2FFE8' },
+      radius: { type: 'number', default: 0.62 },
+      height: { type: 'number', default: 0.95 },
+      columnCount: { type: 'int', default: 24 },
+      speed: { type: 'number', default: 1.0 },
+      orbitSpeed: { type: 'number', default: 0.12 },
+    },
+
+    init() {
+      this.texCols = 16;
+      this.rows = 22;
+      this.canvasWidth = 512;
+      this.canvasHeight = 512;
+      this.redrawTimer = 0;
+      this.disposables = [];
+
+      this.charset =
+        '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]*+';
+
+      // Offscreen canvas for animated Matrix digital rain columns
+      this.canvas = document.createElement('canvas');
+      this.canvas.width = this.canvasWidth;
+      this.canvas.height = this.canvasHeight;
+      this.ctx = this.canvas.getContext('2d');
+
+      // Initialize independent rain tracks across the texture columns
+      this.tracks = Array.from({ length: this.texCols }, (_, idx) => ({
+        headRow: Math.random() * (this.rows + 10),
+        speed: 6.0 + (idx % 5) * 1.45 + Math.random() * 2.0,
+        trail: 7 + (idx % 6) + Math.floor(Math.random() * 3),
+        chars: Array.from({ length: this.rows }, () => this.randomGlyph()),
+      }));
+
+      this.texture = new THREE.CanvasTexture(this.canvas);
+      if ('SRGBColorSpace' in THREE) {
+        this.texture.colorSpace = THREE.SRGBColorSpace;
+      }
+      this.texture.minFilter = THREE.LinearFilter;
+      this.texture.magFilter = THREE.LinearFilter;
+      this.disposables.push(this.texture);
+
+      this.material = new THREE.MeshBasicMaterial({
+        map: this.texture,
+        transparent: true,
+        opacity: 0.92,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      this.disposables.push(this.material);
+
+      this.rootGroup = new THREE.Group();
+
+      const count = Math.max(8, this.data.columnCount);
+      const stripWidth = 0.11;
+      const uPad = 0.002;
+
+      for (let i = 0; i < count; i++) {
+        const colIdx = i % this.texCols;
+        const angle = (i / count) * Math.PI * 2 + (i % 2) * 0.14;
+        const layerRadius = this.data.radius * (i % 2 === 0 ? 0.88 : 1.1);
+        const centerY = 0.08 + this.data.height * 0.5 + (i % 3) * 0.04;
+
+        const geo = new THREE.PlaneGeometry(stripWidth, this.data.height);
+        const uvAttr = geo.attributes.uv;
+        const u0 = colIdx / this.texCols + uPad;
+        const u1 = (colIdx + 1) / this.texCols - uPad;
+
+        for (let v = 0; v < uvAttr.count; v++) {
+          uvAttr.setX(v, uvAttr.getX(v) < 0.5 ? u0 : u1);
+        }
+        uvAttr.needsUpdate = true;
+
+        const strip = new THREE.Mesh(geo, this.material);
+        strip.position.set(
+          Math.cos(angle) * layerRadius,
+          centerY,
+          Math.sin(angle) * layerRadius
+        );
+        strip.rotation.y = -angle + Math.PI / 2;
+
+        this.rootGroup.add(strip);
+        this.disposables.push(geo);
+      }
+
+      this.drawCanvas();
+      this.texture.needsUpdate = true;
+
+      this.el.setObject3D('matrix', this.rootGroup);
+    },
+
+    randomGlyph() {
+      return this.charset[Math.floor(Math.random() * this.charset.length)];
+    },
+
+    drawCanvas() {
+      const ctx = this.ctx;
+      if (!ctx) return;
+
+      const colW = this.canvasWidth / this.texCols;
+      const rowH = this.canvasHeight / this.rows;
+      const baseColor = new THREE.Color(this.data.color);
+      const rCol = Math.round(baseColor.r * 255);
+      const gCol = Math.round(baseColor.g * 255);
+      const bCol = Math.round(baseColor.b * 255);
+
+      ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      ctx.font = `700 ${Math.floor(rowH * 0.82)}px "Space Mono", monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (let c = 0; c < this.texCols; c++) {
+        const track = this.tracks[c];
+        const headIdx = Math.floor(track.headRow);
+        const x = c * colW + colW * 0.5;
+
+        for (let r = 0; r < this.rows; r++) {
+          const dist = headIdx - r;
+          if (dist < 0 || dist >= track.trail) continue;
+
+          // Subtle random glyph shimmer inside active trails
+          if (Math.random() < 0.08) {
+            track.chars[r] = this.randomGlyph();
+          }
+
+          const y = r * rowH + rowH * 0.5;
+
+          if (dist === 0) {
+            ctx.shadowColor = this.data.color;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = this.data.headColor;
+          } else {
+            ctx.shadowBlur = 0;
+            const alpha = Math.pow(1 - dist / track.trail, 1.45) * 0.92;
+            ctx.fillStyle = `rgba(${rCol}, ${gCol}, ${bCol}, ${alpha.toFixed(3)})`;
+          }
+
+          ctx.fillText(track.chars[r], x, y);
+        }
+      }
+
+      ctx.shadowBlur = 0;
+    },
+
+    tick(time, timeDelta) {
+      if (!this.rootGroup) return;
+      const dt = Math.min((timeDelta || 16) / 1000, 0.1);
+
+      // Gentle cylindrical orbit around the central model
+      this.rootGroup.rotation.y += dt * this.data.orbitSpeed;
+
+      // Advance each rain column
+      for (let c = 0; c < this.texCols; c++) {
+        const track = this.tracks[c];
+        track.headRow += dt * track.speed * this.data.speed;
+        if (track.headRow - track.trail > this.rows) {
+          track.headRow = -Math.random() * 4;
+        }
+      }
+
+      // Throttle canvas redraws (~18 FPS) for smooth mobile AR performance
+      this.redrawTimer += dt;
+      if (this.redrawTimer >= 0.055) {
+        this.redrawTimer = 0;
+        this.drawCanvas();
+        this.texture.needsUpdate = true;
+      }
+    },
+
+    remove() {
+      this.el.removeObject3D('matrix');
+      this.disposables.forEach((item) => {
+        if (item && typeof item.dispose === 'function') {
+          item.dispose();
+        }
+      });
+      this.disposables = [];
+      this.tracks = [];
+      this.rootGroup = null;
+      this.ctx = null;
+      this.canvas = null;
+    },
+  });
+}
+
 function buildProceduralFallback(markerId) {
   const root = document.createElement('a-entity');
   root.setAttribute('position', '0 0.08 0');
@@ -512,6 +701,31 @@ function buildProceduralFallback(markerId) {
   return root;
 }
 
+
+function attachFloatingMatrix(wrapper, config) {
+  if (!config) return;
+
+  const matrixEl = document.createElement('a-entity');
+  if (typeof config === 'object') {
+    const attrs = [
+      config.color ? `color: ${config.color}` : '',
+      config.headColor ? `headColor: ${config.headColor}` : '',
+      config.radius !== undefined ? `radius: ${config.radius}` : '',
+      config.height !== undefined ? `height: ${config.height}` : '',
+      config.columnCount !== undefined ? `columnCount: ${config.columnCount}` : '',
+      config.speed !== undefined ? `speed: ${config.speed}` : '',
+      config.orbitSpeed !== undefined ? `orbitSpeed: ${config.orbitSpeed}` : '',
+    ]
+      .filter(Boolean)
+      .join('; ');
+    matrixEl.setAttribute('floating-matrix', attrs);
+  } else {
+    matrixEl.setAttribute('floating-matrix', '');
+  }
+
+  wrapper.appendChild(matrixEl);
+}
+
 function attachFloatingStickers(wrapper, urls = []) {
   if (!Array.isArray(urls) || urls.length === 0) return;
 
@@ -610,6 +824,7 @@ export function buildHologramEntity(asset, mode = 'sim') {
     wrapper.appendChild(gltfEntity);
     attachFloatingStickers(wrapper, asset?.floatingStickers);
     attachFloatingConstellations(wrapper, asset?.floatingConstellations);
+    attachFloatingMatrix(wrapper, asset?.floatingMatrix);
     return wrapper;
   }
 

@@ -117,7 +117,10 @@ export const STICKER_MARKERS = [
     secondaryColor: '#FFD147',
 
     stickerImageUrl: './marker_patterns/gameon.png',
-    modelUrl: './output_models/gameon.glb',
+    modelUrl: './output_models/rizalexport.glb',
+
+    // CONFIG FLAG
+    floatingMatrix: true,
 
     // Live MindAR centered coordinates
     arScale: '0.5 0.5 0.5',
