@@ -7,6 +7,7 @@
  * - mode === 'sim': Normalized tabletop 3D Simulator coordinates (`simPosition`, `simScale`, `simRotation`),
  *   where +Y extends upward from the table.
  */
+import { audioFX } from '../core/audio-fx.js';
 
 if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
   AFRAME.registerComponent('gltf-clips', {

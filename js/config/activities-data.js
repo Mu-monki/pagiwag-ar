@@ -48,6 +48,16 @@ export const STICKER_MARKERS = [
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
+    // AUDIO CONFIG
+    trackSounds: {
+      0: './audio/line1.mp3',
+      1: './audio/line2.mp3',
+      2: './audio/line3.mp3',
+      // '-1': './audio/line-all.mp3',
+    },
+    soundLoop: true,
+    defaultClipIndex: 0,
+
     // 3D Simulator normalized tabletop coordinates
     simScale: '0.5 0.5 0.5',
     simPosition: '0 0.05 0',
@@ -95,6 +105,15 @@ export const STICKER_MARKERS = [
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
+    // AUDIO CONFIG
+    trackSounds: {
+      0: './audio/line1.mp3',
+      1: './audio/line2.mp3',
+      2: './audio/line3.mp3',
+    },
+    soundLoop: true,
+    defaultClipIndex: 0,
+
     // 3D Simulator normalized tabletop coordinates
     simScale: '0.5 0.5 0.5',
     simPosition: '0 0.05 0',
@@ -127,6 +146,15 @@ export const STICKER_MARKERS = [
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
+    // AUDIO CONFIG
+    trackSounds: {
+      0: './audio/line1.mp3',
+      1: './audio/line2.mp3',
+      2: './audio/line3.mp3',
+    },
+    soundLoop: true,
+    defaultClipIndex: 0,
+
     // 3D Simulator normalized tabletop coordinates
     simScale: '0.5 0.5 0.5',
     simPosition: '0 0.05 0',
@@ -155,6 +183,12 @@ export const STICKER_MARKERS = [
     arScale: '1 1 1',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
+
+    // AUDIO CONFIG !!CHANGE LATER!!
+    // soundUrl: './audio/line1.mp3',
+    // soundLoop: true,
+    // defaultClipIndex: -1,
+    // onlyAllTracks: true,
 
     // 3D Simulator normalized tabletop coordinates
     simScale: '1.5 1.5 1.5',
