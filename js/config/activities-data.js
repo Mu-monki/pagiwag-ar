@@ -55,7 +55,7 @@ export const STICKER_MARKERS = [
       2: './audio/line3.mp3',
       // '-1': './audio/line-all.mp3',
     },
-    soundLoop: true,
+    soundLoop: false,
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
@@ -111,7 +111,7 @@ export const STICKER_MARKERS = [
       1: './audio/line2.mp3',
       2: './audio/line3.mp3',
     },
-    soundLoop: true,
+    soundLoop: false,
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
@@ -152,7 +152,7 @@ export const STICKER_MARKERS = [
       1: './audio/line2.mp3',
       2: './audio/line3.mp3',
     },
-    soundLoop: true,
+    soundLoop: false,
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates

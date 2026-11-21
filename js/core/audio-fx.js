@@ -6,20 +6,39 @@ class AudioFX {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.muteListeners = new Set();
+  }
+
+  onMuteChange(listener) {
+    if (typeof listener === 'function') {
+      this.muteListeners.add(listener);
+    }
+    return () => this.muteListeners.delete(listener);
+  }
+
+  notifyMuteChange() {
+    this.muteListeners.forEach((fn) => {
+      try {
+        fn(this.muted);
+      } catch {
+        // Ignore listener errors
+      }
+    });
   }
 
   setMuted(muted) {
     this.muted = Boolean(muted);
+    this.notifyMuteChange();
   }
 
   toggleMute() {
     this.muted = !this.muted;
+    this.notifyMuteChange();
     if (!this.muted) {
       this.playActionTap();
     }
     return this.muted;
   }
-
   ensureContext() {
     if (this.muted) return;
     if (!this.ctx) {

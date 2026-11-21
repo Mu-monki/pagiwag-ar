@@ -111,12 +111,20 @@ export class SceneManager {
 
       targetAnchor.addEventListener('targetFound', () => {
         this.activeTargets.add(asset.id);
+        targetAnchor.querySelectorAll('.hologram-spin-target').forEach((el) => {
+          el.dataset.targetActive = 'true';
+          el.components?.['gltf-clips']?.onTargetFound?.();
+        });
         audioFX.playMarkerLock();
         if (this.onMarkerDetected) this.onMarkerDetected(asset.id);
       });
 
       targetAnchor.addEventListener('targetLost', () => {
         this.activeTargets.delete(asset.id);
+        targetAnchor.querySelectorAll('.hologram-spin-target').forEach((el) => {
+          el.dataset.targetActive = 'false';
+          el.components?.['gltf-clips']?.onTargetLost?.();
+        });
         if (this.activeTargets.size === 0) {
           if (this.onMarkerLost) this.onMarkerLost(asset.id);
         } else {
