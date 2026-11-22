@@ -567,6 +567,114 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['floating-matrix']) {
   });
 }
 
+if (typeof AFRAME !== 'undefined' && !AFRAME.components['floating-coin']) {
+  AFRAME.registerComponent('floating-coin', {
+    schema: {
+      logoUrl: { type: 'string', default: './marker_patterns/coaster_sticker/grit-logo.png' },
+      rimColor: { type: 'color', default: '#F6A821' },
+      radius: { type: 'number', default: 0.12 },
+      thickness: { type: 'number', default: 0.024 },
+      baseY: { type: 'number', default: 0.44 },
+      hoverAmplitude: { type: 'number', default: 0.016 },
+      hoverSpeed: { type: 'number', default: 2.3 },
+      baseSpinSpeed: { type: 'number', default: 2.4 },
+    },
+
+    init() {
+      this.disposables = [];
+      this.spinAngle = 0;
+
+      this.rootGroup = new THREE.Group();
+      this.rootGroup.position.set(0, this.data.baseY, 0);
+
+      // Cylinder rotated on X so circular caps face +Z / -Z and spin around Y
+      const geo = new THREE.CylinderGeometry(
+        this.data.radius,
+        this.data.radius,
+        this.data.thickness,
+        64,
+        1,
+        false
+      );
+      geo.rotateX(Math.PI / 2);
+      this.disposables.push(geo);
+
+      const loader = new THREE.TextureLoader();
+      const frontTex = loader.load(this.data.logoUrl);
+      if ('SRGBColorSpace' in THREE) {
+        frontTex.colorSpace = THREE.SRGBColorSpace;
+      }
+      frontTex.anisotropy = 4;
+
+      // Mirror U horizontally on the back cap so text reads forward on both sides
+      const backTex = frontTex.clone();
+      backTex.wrapS = THREE.RepeatWrapping;
+      backTex.repeat.set(-1, 1);
+      backTex.offset.set(1, 0);
+      backTex.needsUpdate = true;
+      this.disposables.push(frontTex, backTex);
+
+      const rimMat = new THREE.MeshStandardMaterial({
+        color: this.data.rimColor,
+        metalness: 0.78,
+        roughness: 0.24,
+      });
+
+      const frontMat = new THREE.MeshStandardMaterial({
+        map: frontTex,
+        transparent: true,
+        alphaTest: 0.05,
+        metalness: 0.12,
+        roughness: 0.35,
+      });
+
+      const backMat = new THREE.MeshStandardMaterial({
+        map: backTex,
+        transparent: true,
+        alphaTest: 0.05,
+        metalness: 0.12,
+        roughness: 0.35,
+      });
+
+      this.disposables.push(rimMat, frontMat, backMat);
+
+      // CylinderGeometry material groups: [0] side rim, [1] front cap, [2] back cap
+      this.coinMesh = new THREE.Mesh(geo, [rimMat, frontMat, backMat]);
+      this.rootGroup.add(this.coinMesh);
+
+      this.el.setObject3D('coin', this.rootGroup);
+    },
+
+    tick(time, timeDelta) {
+      if (!this.rootGroup) return;
+      const dt = Math.min((timeDelta || 16) / 1000, 0.1);
+      const t = (time || 0) / 1000;
+
+      // Non-linear energetic spin: rhythmic momentum surges without reversing
+      const velocityBoost = 1 + 0.68 * Math.sin(t * 2.7);
+      this.spinAngle += dt * this.data.baseSpinSpeed * velocityBoost;
+      this.rootGroup.rotation.y = this.spinAngle;
+
+      // Subtle dynamic tilt & gentle vertical hover
+      this.rootGroup.rotation.z = Math.sin(t * 2.1) * 0.055;
+      this.rootGroup.position.y =
+        this.data.baseY + Math.sin(t * this.data.hoverSpeed) * this.data.hoverAmplitude;
+    },
+
+    remove() {
+      this.el.removeObject3D('coin');
+      this.disposables.forEach((item) => {
+        if (item && typeof item.dispose === 'function') {
+          item.dispose();
+        }
+      });
+      this.disposables = [];
+      this.rootGroup = null;
+      this.coinMesh = null;
+    },
+  });
+}
+
 function buildProceduralFallback(markerId) {
   const root = document.createElement('a-entity');
   root.setAttribute('position', '0 0.08 0');
@@ -764,6 +872,31 @@ function attachFloatingStickers(wrapper, urls = []) {
   wrapper.appendChild(ring);
 }
 
+function attachFloatingCoin(wrapper, config, isAr = false) {
+  if (!config) return;
+
+  const coinEl = document.createElement('a-entity');
+  const radius = isAr ? (config.arRadius ?? 0.115) : (config.simRadius ?? 0.19);
+  const thickness = isAr ? (config.arThickness ?? 0.022) : (config.simThickness ?? 0.036);
+  const baseY = isAr ? (config.arY ?? 0.43) : (config.simY ?? 0.76);
+
+  const attrs = [
+    config.logoUrl ? `logoUrl: ${config.logoUrl}` : '',
+    config.rimColor ? `rimColor: ${config.rimColor}` : '',
+    `radius: ${radius}`,
+    `thickness: ${thickness}`,
+    `baseY: ${baseY}`,
+    config.hoverAmplitude !== undefined ? `hoverAmplitude: ${config.hoverAmplitude}` : '',
+    config.hoverSpeed !== undefined ? `hoverSpeed: ${config.hoverSpeed}` : '',
+    config.baseSpinSpeed !== undefined ? `baseSpinSpeed: ${config.baseSpinSpeed}` : '',
+  ]
+    .filter(Boolean)
+    .join('; ');
+
+  coinEl.setAttribute('floating-coin', attrs);
+  wrapper.appendChild(coinEl);
+}
+
 function attachFloatingConstellations(wrapper, config) {
   if (!config) return;
 
@@ -816,6 +949,20 @@ export function buildHologramEntity(asset, mode = 'sim') {
     gltfEntity.setAttribute('gltf-clips', '');
     gltfEntity.setAttribute('scale', scl);
 
+    // ROTATION ADJUSTMENT FOR SPECIFIC MODEL - DOES NOT WORK
+    // if (asset.id === 'PAG-IWAG Caravan') {
+    //   gltfEntity.addEventListener('model-loaded', (e) => {
+    //     const model = e.detail?.model;
+    //     if (!model) return;
+    //     model.traverse((child) => {
+    //       // Rotate only the coin meshes (Object_2 and Object_2.001 / Object_2001), not the Jeepney
+    //       if (child.isMesh && child.name.startsWith('Object_2')) {
+    //         child.rotateY(-Math.PI / 2); // Use -Math.PI / 2 if it needs to turn the opposite 90°
+    //       }
+    //     });
+    //   });
+    // }
+
     if (asset.autoSpin !== false) {
       gltfEntity.setAttribute(
         'animation',
@@ -837,6 +984,7 @@ export function buildHologramEntity(asset, mode = 'sim') {
     attachFloatingStickers(wrapper, asset?.floatingStickers);
     attachFloatingConstellations(wrapper, asset?.floatingConstellations);
     attachFloatingMatrix(wrapper, asset?.floatingMatrix);
+    attachFloatingCoin(wrapper, asset?.floatingCoin, isAr);
     return wrapper;
   }
 

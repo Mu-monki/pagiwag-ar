@@ -183,9 +183,22 @@ export const STICKER_MARKERS = [
     stickerImageUrl: './marker_patterns/coaster_sticker/grit-logo.png',
     modelUrl: './output_models/pagiwagjeep.glb',
 
+    // Circular institutional coin positioned right above the jeepney roof
+    floatingCoin: {
+      logoUrl: './marker_patterns/coaster_sticker/ncpag-logo.png',
+      rimColor: '#F6A821',
+      arRadius: 0.115,
+      arThickness: 0.022,
+      arY: 0.43,
+      simRadius: 0.15,
+      simThickness: 0.036,
+      simY: 0.76,
+    },
+
     // Live MindAR centered coordinates
     arScale: '0.8 0.8 0.8',
     arPosition: '0 0 0.05',
+    arRotation: '0 0 0',
     arRotation: '90 0 0',
 
     // AUDIO CONFIG !!CHANGE LATER!!
@@ -195,7 +208,7 @@ export const STICKER_MARKERS = [
     onlyAllTracks: true,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '1.5 1.5 1.5',
+    simScale: '1.2 1.2 1.2',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     autoSpin: false,
@@ -203,7 +216,6 @@ export const STICKER_MARKERS = [
     description:
       'PAG-IWAG is a nationwide knowledge-sharing and capacity-building caravan of the University of the Philippines National College of Public Administration and Governance (UP NCPAG) Governance Reform, Innovation and Transformation Research Collaboratories (GRIT Labs)',
   },
-
   /* =========================================================================
      EXAMPLE TEMPLATE FOR ADDING A 5TH STICKER (targetIndex: 4):
      1. Include custom_sticker.png as the 5th image when compiling stickers.mind
