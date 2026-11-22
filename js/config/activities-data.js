@@ -31,7 +31,8 @@ export const MINDAR_CONFIG = {
 export const STICKER_MARKERS = [
   {
     id: 'pagtanow',
-    targetIndex: 0,
+    targetIndex: 15,
+    targetIndices: [15,16,17,18,19,20,21,22,23,24],
     icon: '<i class="fa-regular fa-gem"></i>',
     name: 'PagtaNOW: Images of the Future',
     shortLabel: 'PagtaNOW',
@@ -80,7 +81,8 @@ export const STICKER_MARKERS = [
   },
   {
     id: 'talampad',
-    targetIndex: 1,
+    targetIndex: 9,
+    targetIndices: [9,10,11,12,13,14],
     // icon: '⚖️',
     icon: '<i class="fa-solid fa-star-half-stroke"></i>',
     name: 'TALAMPAD: Civic Priorities & Principled Actions',
@@ -125,7 +127,8 @@ export const STICKER_MARKERS = [
   },
   {
     id: 'GoVRnance',
-    targetIndex: 2,
+    targetIndex: 5,
+    targetIndices: [5,6,7,8],
     // icon: '🎲',
     icon: '<i class="fa-solid fa-vr-cardboard"></i>',
     name: 'GoVRnance: A Virtual Reality Simulation Experience on Public Sector Integrity and Accountability',
@@ -166,7 +169,8 @@ export const STICKER_MARKERS = [
   },
   {
     id: 'PAG-IWAG Caravan',
-    targetIndex: 3,
+    targetIndex: 0,
+    targetIndices: [0,1,2,3,4],
     // icon: '🔥',
     icon: '<i class="fa-solid fa-fire"></i>',
     name: 'PAG-IWAG Caravan by UP NCPAG GRIT Labs',
