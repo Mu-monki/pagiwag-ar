@@ -92,8 +92,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       chip.classList.add(asset.hasMindBundle ? 'ready' : 'sim-only');
     }
     if (tag) {
-      const targetBadge = asset.hasMindBundle ? 'MIND' : 'SIM';
-      const modelBadge = asset.hasCustomModel ? '+GLB' : '+3D';
+      // const targetBadge = asset.hasMindBundle ? 'MIND' : 'SIM';
+      // const modelBadge = asset.hasCustomModel ? '+GLB' : '+3D';
+      const targetBadge = 'AR ';
+      const modelBadge = 'Model';
       tag.textContent = `${targetBadge}${modelBadge}`;
     }
     statusText.textContent = `Verified ${asset.shortLabel} (${step}/${total})...`;
