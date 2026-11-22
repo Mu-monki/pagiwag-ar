@@ -22,10 +22,10 @@ export const MINDAR_CONFIG = {
   targetSrc: './marker_patterns/stickers.mind',
   maxTrack: 1,
   // Lower values damp handheld jitter; raise filterBeta slightly if motion feels laggy
-  filterMinCF: 0.0001,
-  filterBeta: 0.001,
-  warmupTolerance: 5,
-  missTolerance: 10,
+  filterMinCF: 0.0005,
+  filterBeta: 0.005,
+  warmupTolerance: 7,
+  missTolerance: 15,
 };
 
 export const STICKER_MARKERS = [
@@ -45,7 +45,7 @@ export const STICKER_MARKERS = [
     modelUrl: './output_models/rizalexport.glb',
 
     // Live MindAR centered coordinates (1 unit = sticker width, +Z out toward viewer)
-    arScale: '0.5 0.5 0.5',
+    arScale: '0.35 0.35 0.35',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
@@ -60,7 +60,7 @@ export const STICKER_MARKERS = [
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.5 0.5 0.5',
+    simScale: '0.3 0.3 0.3',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     // autoSpin: false,
@@ -103,7 +103,7 @@ export const STICKER_MARKERS = [
     lineColor: '#F6A821',
 
     // Live MindAR centered coordinates
-    arScale: '0.5 0.5 0.5',
+    arScale: '0.35 0.35 0.35',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
@@ -117,7 +117,7 @@ export const STICKER_MARKERS = [
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.5 0.5 0.5',
+    simScale: '0.3 0.3 0.3',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     autoSpin: true,
@@ -145,7 +145,7 @@ export const STICKER_MARKERS = [
     floatingMatrix: true,
 
     // Live MindAR centered coordinates
-    arScale: '0.5 0.5 0.5',
+    arScale: '0.3 0.3 0.3',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
@@ -184,7 +184,7 @@ export const STICKER_MARKERS = [
     modelUrl: './output_models/pagiwagjeep.glb',
 
     // Live MindAR centered coordinates
-    arScale: '1 1 1',
+    arScale: '0.8 0.8 0.8',
     arPosition: '0 0 0.05',
     arRotation: '90 0 0',
 
