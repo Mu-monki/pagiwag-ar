@@ -41,7 +41,7 @@ export const STICKER_MARKERS = [
     accentColor: '#2B7A78',
     secondaryColor: '#F6A821',
 
-    stickerImageUrl: './marker_patterns/pagtanow.png',
+    stickerImageUrl: './marker_patterns/coaster_sticker/PAGTANOW.png',
     modelUrl: './output_models/rizalexport.glb',
 
     // Live MindAR centered coordinates (1 unit = sticker width, +Z out toward viewer)
@@ -60,7 +60,7 @@ export const STICKER_MARKERS = [
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.3 0.3 0.3',
+    simScale: '0.35 0.35 0.35',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     // autoSpin: false,
@@ -92,7 +92,7 @@ export const STICKER_MARKERS = [
     accentColor: '#D63629',
     secondaryColor: '#1B4988',
 
-    stickerImageUrl: './marker_patterns/talampad.png',
+    stickerImageUrl: './marker_patterns/coaster_sticker/TALAMPAD.png',
     modelUrl: './output_models/rizalexport.glb',
 
     // CONFIG FLAG
@@ -117,7 +117,7 @@ export const STICKER_MARKERS = [
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.3 0.3 0.3',
+    simScale: '0.35 0.35 0.35',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     autoSpin: true,
@@ -138,7 +138,7 @@ export const STICKER_MARKERS = [
     accentColor: '#1B4988',
     secondaryColor: '#FFD147',
 
-    stickerImageUrl: './marker_patterns/gameon.png',
+    stickerImageUrl: './marker_patterns/coaster_sticker/GOVRNANCE.png',
     modelUrl: './output_models/rizalexport.glb',
 
     // CONFIG FLAG
@@ -159,7 +159,7 @@ export const STICKER_MARKERS = [
     defaultClipIndex: 0,
 
     // 3D Simulator normalized tabletop coordinates
-    simScale: '0.5 0.5 0.5',
+    simScale: '0.35 0.35 0.35',
     simPosition: '0 0.05 0',
     simRotation: '0 0 0',
     autoSpin: true,
@@ -180,7 +180,7 @@ export const STICKER_MARKERS = [
     accentColor: '#F6A821',
     secondaryColor: '#0D254C',
 
-    stickerImageUrl: './marker_patterns/kabataan.png',
+    stickerImageUrl: './marker_patterns/coaster_sticker/grit-logo.png',
     modelUrl: './output_models/pagiwagjeep.glb',
 
     // Live MindAR centered coordinates
