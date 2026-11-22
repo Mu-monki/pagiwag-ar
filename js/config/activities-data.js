@@ -189,10 +189,10 @@ export const STICKER_MARKERS = [
     arRotation: '90 0 0',
 
     // AUDIO CONFIG !!CHANGE LATER!!
-    // soundUrl: './audio/line1.mp3',
-    // soundLoop: true,
-    // defaultClipIndex: -1,
-    // onlyAllTracks: true,
+    soundUrl: './audio/caravan.wav',
+    soundLoop: true,
+    defaultClipIndex: -1,
+    onlyAllTracks: true,
 
     // 3D Simulator normalized tabletop coordinates
     simScale: '1.5 1.5 1.5',
