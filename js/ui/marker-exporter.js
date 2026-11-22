@@ -24,10 +24,10 @@ export function renderKitModalGrid(gridEl, compiledItems) {
     const card = document.createElement('div');
     card.className = 'kit-item';
     card.innerHTML = `
-      <img src="${asset.previewDataUrl}" alt="${sticker.name} Borderless Sticker" />
+      <img src="${asset.previewDataUrl}" alt="${sticker.name} AR Sticker" />
       <h3>${sticker.shortLabel}</h3>
       <button class="btn btn-outline" data-dl-id="${sticker.id}">
-        ⬇️ Download PNG
+        <i class="fa-solid fa-download"></i> Download PNG
       </button>
     `;
 
@@ -55,7 +55,7 @@ export function downloadPrintableSheet(compiledItems) {
   ctx.fillStyle = '#FFD147';
   ctx.font = 'bold 42px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('PAG-IWAG 2026 — BORDERLESS AR STICKER SHEET', sheet.width / 2, 92);
+  ctx.fillText('PAG-IWAG 2026 — AR-Supported STICKER SHEET', sheet.width / 2, 92);
 
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '20px sans-serif';

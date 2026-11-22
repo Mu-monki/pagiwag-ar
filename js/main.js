@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     onCameraReady: () => {
       if (reticleHintText) {
         reticleHintText.innerHTML =
-          'Point camera at any borderless <strong>PAG-IWAG</strong> sticker';
+          'Point camera at any AR-Supported <strong>PAG-IWAG</strong> sticker';
       }
     },
     onCameraError: (reason) => {
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         'Starting MindAR camera… Point at any <strong>PAG-IWAG</strong> sticker';
     }
 
-    hudModeBadge.textContent = 'MINDAR TRACKING';
+    hudModeBadge.textContent = 'LIVE TRACKING';
     hudModeBadge.className = 'hud-badge hud-badge--live';
     btnToggleMode.textContent = 'Switch to 3D Sim';
 
