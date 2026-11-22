@@ -57,29 +57,34 @@ export class ActivityDrawer {
     const controllers = this.getActiveClipControllers();
     const primaryCtrl = controllers[0] || null;
     const tracks = primaryCtrl ? primaryCtrl.getTrackNames() : [];
+    const onlyAllTracks = Boolean(meta.onlyAllTracks);
 
     const animControlsHtml =
       tracks.length > 0
         ? `
       <div class="callout-box" style="border-color: ${meta.accentColor || '#0D254C'};">
         <div class="drawer-meta-row" style="margin-bottom: 8px;">
-          <strong><i class="fa-solid fa-circle-play"></i> Play Actions (${tracks.length})</strong>
+          <strong><i class="fa-solid fa-circle-play"></i> Play Actions (${onlyAllTracks ? 'All Tracks' : tracks.length})</strong>
           <button id="btn-anim-playpause" class="drawer-mini-btn" type="button">
             ${primaryCtrl.clipsPlaying ? '⏸ Pause' : '▶️ Play'}
           </button>
         </div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-          ${tracks
-            .map(
-              (name, idx) => `
+          ${
+            onlyAllTracks
+              ? ''
+              : tracks
+                  .map(
+                    (name, idx) => `
             <button type="button" class="drawer-mini-btn" data-clip-idx="${idx}"
               style="${primaryCtrl.activeIndex === idx ? 'background: var(--gold-torch);' : ''}">
               ${name}
             </button>`
-            )
-            .join('')}
+                  )
+                  .join('')
+          }
           ${
-            tracks.length > 1
+            tracks.length > 1 || onlyAllTracks
               ? `<button type="button" class="drawer-mini-btn" data-clip-idx="-1"
                   style="${primaryCtrl.activeIndex === -1 ? 'background: var(--gold-torch);' : ''}">
                   All Tracks
@@ -96,24 +101,15 @@ export class ActivityDrawer {
         <p class="activity-desc" style="margin-top: 6px;">${meta.description}</p>
       </div>
       ${animControlsHtml}
-      <div class="drawer-meta-row">
-        
-      </div>
+      <div class="drawer-meta-row"></div>
     `;
-
-    // TARGET INDEX INFO
-    // <span class="kicker-pill" style="background: ${meta.accentColor || '#1B4988'};">
-    //     TARGET INDEX #${meta.targetIndex ?? 0}
-    //   </span>
-
-    // CHIME BUTTON
-    // <button id="btn-replay-chime" class="drawer-mini-btn" type="button">🔔 Replay Chime</button>
 
     this.bodyEl.querySelectorAll('[data-clip-idx]').forEach((btn) => {
       btn.addEventListener('click', () => {
         audioFX.playActionTap();
         const clipIdx = Number(btn.dataset.clipIdx);
         this.getActiveClipControllers().forEach((ctrl) => ctrl.playClip(clipIdx));
+        audioFX.playActivitySound(meta, clipIdx);
         this.render(meta);
       });
     });
@@ -122,14 +118,13 @@ export class ActivityDrawer {
     if (playPauseBtn) {
       playPauseBtn.addEventListener('click', () => {
         audioFX.playActionTap();
-        this.getActiveClipControllers().forEach((ctrl) => ctrl.togglePlayPause());
+        let isPlaying = true;
+        this.getActiveClipControllers().forEach((ctrl) => {
+          isPlaying = ctrl.togglePlayPause();
+        });
+        audioFX.setActivitySoundPaused(!isPlaying);
         this.render(meta);
       });
-    }
-
-    const chimeBtn = this.bodyEl.querySelector('#btn-replay-chime');
-    if (chimeBtn) {
-      chimeBtn.addEventListener('click', () => audioFX.playMarkerLock());
     }
   }
 }

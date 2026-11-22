@@ -9,148 +9,38 @@
  */
 import { audioFX } from '../core/audio-fx.js';
 
+// Replace the `gltf-clips` registration at the top of js/ar/holograms.js:
 if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
   AFRAME.registerComponent('gltf-clips', {
+    schema: {
+      defaultClip: { type: 'int', default: 0 },
+    },
     init() {
       this.mixer = null;
       this.clips = [];
       this.actions = [];
-      this.activeIndex = 0; // -1 = all tracks, >= 0 = single track index
+      this.activeIndex = this.data.defaultClip;
       this.clipsPlaying = true;
-      this.audioEl = null;
-      this.currentAudioSrc = null;
-      this.isTargetActive = this.el.dataset.targetActive !== 'false';
-      this.retryUnlockHandler = null;
-
-      this.unsubscribeMute = audioFX.onMuteChange((muted) => {
-        if (this.audioEl) {
-          this.audioEl.muted = muted;
-        }
-      });
 
       this.el.addEventListener('model-loaded', (e) => {
         const model = e.detail?.model;
         if (!model || !Array.isArray(model.animations) || model.animations.length === 0) return;
 
-        const cfg = this.el._audioConfig || {};
-        const startIdx =
-          typeof cfg.defaultClipIndex === 'number' ? cfg.defaultClipIndex : 0;
-
         this.clips = model.animations;
         this.mixer = new THREE.AnimationMixer(model);
         this.actions = this.clips.map((clip) => this.mixer.clipAction(clip));
-        this.playClip(startIdx, { autoplayAudio: this.isTargetActive });
+        this.playClip(this.data.defaultClip);
 
         window.dispatchEvent(new CustomEvent('gltf-clips-loaded'));
       });
     },
-
     getTrackNames() {
       return this.clips.map((c, idx) => c.name || `Track ${idx + 1}`);
     },
-
-    resolveAudioSrc(index) {
-      const cfg = this.el._audioConfig || {};
-      const trackSounds = cfg.trackSounds || {};
-
-      // 1. Direct index match (0 -> line1.mp3, 1 -> line2.mp3, 2 -> line3.mp3)
-      if (trackSounds[index] !== undefined && trackSounds[index] !== null) {
-        return trackSounds[index];
-      }
-      const strIdx = String(index);
-      if (trackSounds[strIdx] !== undefined && trackSounds[strIdx] !== null) {
-        return trackSounds[strIdx];
-      }
-
-      // 2. Fallback match by animation clip name (e.g. 'quote1', 'quote2', 'quote3')
-      if (index >= 0 && this.clips[index]) {
-        const rawName = (this.clips[index].name || '').trim();
-        if (rawName && trackSounds[rawName]) return trackSounds[rawName];
-        const normalized = rawName.toLowerCase().replace(/\s+/g, '');
-        for (const [key, val] of Object.entries(trackSounds)) {
-          if (key.toLowerCase().replace(/\s+/g, '') === normalized) {
-            return val;
-          }
-        }
-      }
-
-      // 3. Optional single-model fallback audio
-      return cfg.soundUrl || null;
-    },
-
-    clearRetryUnlock() {
-      if (this.retryUnlockHandler) {
-        window.removeEventListener('pointerdown', this.retryUnlockHandler);
-        this.retryUnlockHandler = null;
-      }
-    },
-
-    stopAudio() {
-      this.clearRetryUnlock();
-      if (this.audioEl) {
-        try {
-          this.audioEl.pause();
-          this.audioEl.currentTime = 0;
-          this.audioEl.src = '';
-        } catch {
-          // Ignore audio teardown errors
-        }
-        this.audioEl = null;
-        this.currentAudioSrc = null;
-      }
-    },
-
-    playAudioForClip(index, { restart = true } = {}) {
-      const src = this.resolveAudioSrc(index);
-      if (!src) {
-        this.stopAudio();
-        return;
-      }
-
-      const cfg = this.el._audioConfig || {};
-      const shouldLoop = cfg.soundLoop !== false;
-
-      if (!this.audioEl || this.currentAudioSrc !== src) {
-        this.stopAudio();
-        this.audioEl = new Audio(src);
-        this.audioEl.preload = 'auto';
-        this.currentAudioSrc = src;
-      }
-
-      this.audioEl.loop = shouldLoop;
-      this.audioEl.muted = audioFX.muted;
-
-      if (restart) {
-        try {
-          this.audioEl.currentTime = 0;
-        } catch {
-          // Ignore seek before metadata ready
-        }
-      }
-
-      const attemptPlay = () => {
-        if (!this.audioEl || !this.clipsPlaying || !this.isTargetActive) return;
-        const p = this.audioEl.play();
-        if (p && typeof p.catch === 'function') {
-          p.catch(() => {
-            if (this.retryUnlockHandler) return;
-            this.retryUnlockHandler = () => {
-              this.clearRetryUnlock();
-              attemptPlay();
-            };
-            window.addEventListener('pointerdown', this.retryUnlockHandler, { once: true });
-          });
-        }
-      };
-
-      attemptPlay();
-    },
-
-    playClip(index, { autoplayAudio = true } = {}) {
+    playClip(index) {
       if (!this.mixer || this.actions.length === 0) return;
       this.activeIndex = index;
       this.clipsPlaying = true;
-
       this.actions.forEach((action, idx) => {
         if (index === -1 || idx === index) {
           action.enabled = true;
@@ -160,62 +50,21 @@ if (typeof AFRAME !== 'undefined' && !AFRAME.components['gltf-clips']) {
           action.stop();
         }
       });
-
-      if (autoplayAudio && this.isTargetActive) {
-        this.playAudioForClip(index, { restart: true });
-      } else {
-        this.stopAudio();
-      }
     },
-
     togglePlayPause() {
       if (!this.mixer || this.actions.length === 0) return false;
       this.clipsPlaying = !this.clipsPlaying;
-
       this.actions.forEach((action, idx) => {
         if (this.activeIndex === -1 || idx === this.activeIndex) {
           action.paused = !this.clipsPlaying;
         }
       });
-
-      if (this.clipsPlaying && this.isTargetActive) {
-        if (this.audioEl) {
-          this.audioEl.muted = audioFX.muted;
-          this.audioEl.play().catch(() => {});
-        } else {
-          this.playAudioForClip(this.activeIndex, { restart: false });
-        }
-      } else if (this.audioEl) {
-        this.audioEl.pause();
-      }
-
       return this.clipsPlaying;
     },
-
-    onTargetFound() {
-      this.isTargetActive = true;
-      this.el.dataset.targetActive = 'true';
-      if (this.mixer && this.actions.length > 0) {
-        this.playClip(this.activeIndex, { autoplayAudio: true });
-      }
-    },
-
-    onTargetLost() {
-      this.isTargetActive = false;
-      this.el.dataset.targetActive = 'false';
-      this.stopAudio();
-    },
-
     tick(time, timeDelta) {
       if (this.mixer && this.clipsPlaying) this.mixer.update(timeDelta / 1000);
     },
-
     remove() {
-      this.stopAudio();
-      if (typeof this.unsubscribeMute === 'function') {
-        this.unsubscribeMute();
-        this.unsubscribeMute = null;
-      }
       if (this.mixer) {
         this.mixer.stopAllAction();
         this.mixer = null;

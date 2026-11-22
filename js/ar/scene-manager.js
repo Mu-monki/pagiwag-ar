@@ -17,7 +17,8 @@ export class SceneManager {
     this.activeSimMarker = null;
     this.compiledBundle = null;
     this.videoWatchdog = null;
-    this.activeTargets = new Set();
+    this.lockedTargetIndex = null;
+    this.targetHolograms = new Map();
     this.orbitState = {
       isDragging: false,
       lastX: 0,
@@ -33,9 +34,10 @@ export class SceneManager {
       this.videoWatchdog = null;
     }
 
-    this.activeTargets.clear();
+    this.lockedTargetIndex = null;
+    this.targetHolograms.clear();
+    audioFX.stopActivitySound();
 
-    // Stop MindAR system cleanly if running
     const existingScene = this.mountEl.querySelector('a-scene');
     if (existingScene && existingScene.systems && existingScene.systems['mindar-image-system']) {
       try {
@@ -85,9 +87,10 @@ export class SceneManager {
     const warmup = MINDAR_CONFIG.warmupTolerance ?? 5;
     const miss = MINDAR_CONFIG.missTolerance ?? 10;
 
+    // Force maxTrack = 1 so MindAR prioritizes a single target
     scene.setAttribute(
       'mindar-image',
-      `imageTargetSrc: ${compiledBundle.resolvedMindUrl}; maxTrack: ${compiledBundle.maxTrack}; filterMinCF: ${minCF}; filterBeta: ${beta}; warmupTolerance: ${warmup}; missTolerance: ${miss}; uiLoading: no; uiScanning: no; uiError: no;`
+      `imageTargetSrc: ${compiledBundle.resolvedMindUrl}; maxTrack: 1; filterMinCF: ${minCF}; filterBeta: ${beta}; warmupTolerance: ${warmup}; missTolerance: ${miss}; uiLoading: no; uiScanning: no; uiError: no;`
     );
     scene.setAttribute('color-space', 'sRGB');
     scene.setAttribute('renderer', 'colorManagement: true, physicallyCorrectLights, alpha: true');
@@ -101,39 +104,47 @@ export class SceneManager {
 
     const assetsList = Object.values(compiledBundle.items);
     assetsList.forEach((asset, idx) => {
-      const targetIndex = Number.isInteger(asset.targetIndex) ? asset.targetIndex : idx;
+      // Support multiple sticker targetIndices mapped to one of the 4 outputs
+      const indices =
+        Array.isArray(asset.targetIndices) && asset.targetIndices.length > 0
+          ? asset.targetIndices
+          : [Number.isInteger(asset.targetIndex) ? asset.targetIndex : idx];
 
-      const targetAnchor = document.createElement('a-entity');
-      targetAnchor.setAttribute('mindar-image-target', `targetIndex: ${targetIndex}`);
+      indices.forEach((targetIndex) => {
+        const targetAnchor = document.createElement('a-entity');
+        targetAnchor.setAttribute('mindar-image-target', `targetIndex: ${targetIndex}`);
 
-      const hologram = buildHologramEntity(asset, 'ar');
-      targetAnchor.appendChild(hologram);
+        const hologram = buildHologramEntity(asset, 'ar');
+        targetAnchor.appendChild(hologram);
+        this.targetHolograms.set(targetIndex, hologram);
 
-      targetAnchor.addEventListener('targetFound', () => {
-        this.activeTargets.add(asset.id);
-        targetAnchor.querySelectorAll('.hologram-spin-target').forEach((el) => {
-          el.dataset.targetActive = 'true';
-          el.components?.['gltf-clips']?.onTargetFound?.();
+        targetAnchor.addEventListener('targetFound', () => {
+          // Strict first-marker lock: ignore any additional markers while one is active
+          if (this.lockedTargetIndex !== null && this.lockedTargetIndex !== targetIndex) {
+            hologram.setAttribute('visible', 'false');
+            return;
+          }
+
+          this.lockedTargetIndex = targetIndex;
+          hologram.setAttribute('visible', 'true');
+          audioFX.playMarkerLock();
+          audioFX.playActivitySound(asset, asset.defaultClipIndex ?? 0);
+
+          if (this.onMarkerDetected) this.onMarkerDetected(asset.id);
         });
-        audioFX.playMarkerLock();
-        if (this.onMarkerDetected) this.onMarkerDetected(asset.id);
-      });
 
-      targetAnchor.addEventListener('targetLost', () => {
-        this.activeTargets.delete(asset.id);
-        targetAnchor.querySelectorAll('.hologram-spin-target').forEach((el) => {
-          el.dataset.targetActive = 'false';
-          el.components?.['gltf-clips']?.onTargetLost?.();
-        });
-        if (this.activeTargets.size === 0) {
+        targetAnchor.addEventListener('targetLost', () => {
+          // Only unlock when the currently locked first marker leaves the camera
+          if (this.lockedTargetIndex !== targetIndex) return;
+
+          this.lockedTargetIndex = null;
+          audioFX.stopActivitySound();
+
           if (this.onMarkerLost) this.onMarkerLost(asset.id);
-        } else {
-          const remainingId = Array.from(this.activeTargets).pop();
-          if (this.onMarkerDetected) this.onMarkerDetected(remainingId);
-        }
-      });
+        });
 
-      scene.appendChild(targetAnchor);
+        scene.appendChild(targetAnchor);
+      });
     });
 
     const handleReady = () => {
@@ -172,7 +183,6 @@ export class SceneManager {
 
     this.mountEl.appendChild(scene);
 
-    // Watchdog in case camera permissions stall silently
     this.videoWatchdog = setTimeout(() => {
       const vid = document.querySelector('video');
       if (vid && vid.srcObject && vid.readyState >= 2) {
@@ -228,7 +238,6 @@ export class SceneManager {
     tableDisc.setAttribute('color', '#1B4988');
     stage.appendChild(tableDisc);
 
-    // Transparent alphaTest plane so die-cut / circular borderless stickers render cleanly
     const stickerPlane = document.createElement('a-plane');
     stickerPlane.setAttribute('id', 'sim-sticker-plane');
     stickerPlane.setAttribute('width', '1.25');
@@ -255,6 +264,8 @@ export class SceneManager {
     this.mountEl.appendChild(scene);
     this.attachOrbitControls(stage);
 
+    audioFX.playActivitySound(items[startId], items[startId].defaultClipIndex ?? 0);
+
     if (this.onMarkerDetected) {
       this.onMarkerDetected(startId);
     }
@@ -277,6 +288,8 @@ export class SceneManager {
     }
 
     audioFX.playMarkerLock();
+    audioFX.playActivitySound(asset, asset.defaultClipIndex ?? 0);
+
     if (this.onMarkerDetected) {
       this.onMarkerDetected(markerId);
     }

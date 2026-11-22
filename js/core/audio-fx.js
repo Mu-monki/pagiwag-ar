@@ -1,44 +1,93 @@
 /**
- * Lightweight Web Audio Synthesizer for PAG-IWAG AR Sound Effects (SFX)
+ * Web Audio Synthesizer & Activity MP3 Controller for PAG-IWAG AR
  */
 
 class AudioFX {
   constructor() {
     this.ctx = null;
     this.muted = false;
-    this.muteListeners = new Set();
-  }
-
-  onMuteChange(listener) {
-    if (typeof listener === 'function') {
-      this.muteListeners.add(listener);
-    }
-    return () => this.muteListeners.delete(listener);
-  }
-
-  notifyMuteChange() {
-    this.muteListeners.forEach((fn) => {
-      try {
-        fn(this.muted);
-      } catch {
-        // Ignore listener errors
-      }
-    });
+    this.trackAudio = null;
+    this.currentTrackUrl = null;
   }
 
   setMuted(muted) {
     this.muted = Boolean(muted);
-    this.notifyMuteChange();
+    if (this.trackAudio) {
+      this.trackAudio.muted = this.muted;
+    }
   }
 
   toggleMute() {
     this.muted = !this.muted;
-    this.notifyMuteChange();
+    if (this.trackAudio) {
+      this.trackAudio.muted = this.muted;
+      if (!this.muted && this.trackAudio.paused && this.currentTrackUrl) {
+        this.trackAudio.play().catch(() => {});
+      }
+    }
     if (!this.muted) {
       this.playActionTap();
     }
     return this.muted;
   }
+
+  playActivitySound(meta, clipIndex = null) {
+    if (!meta) {
+      this.stopActivitySound();
+      return;
+    }
+
+    const activeClip = clipIndex ?? meta.defaultClipIndex ?? 0;
+    const url =
+      meta.soundUrl ||
+      (meta.trackSounds && (meta.trackSounds[activeClip] ?? meta.trackSounds[String(activeClip)])) ||
+      null;
+
+    if (!url) {
+      this.stopActivitySound();
+      return;
+    }
+
+    // Avoid restarting if the exact same MP3 is already playing
+    if (this.trackAudio && this.currentTrackUrl === url && !this.trackAudio.paused) {
+      this.trackAudio.loop = meta.soundLoop !== false;
+      this.trackAudio.muted = this.muted;
+      return;
+    }
+
+    this.stopActivitySound();
+
+    const audio = new Audio(url);
+    audio.loop = meta.soundLoop !== false;
+    audio.muted = this.muted;
+    audio.preload = 'auto';
+
+    this.trackAudio = audio;
+    this.currentTrackUrl = url;
+
+    audio.play().catch(() => {
+      // Browser autoplay policy fallback if triggered before user gesture
+    });
+  }
+
+  setActivitySoundPaused(paused) {
+    if (!this.trackAudio) return;
+    if (paused) {
+      this.trackAudio.pause();
+    } else if (!this.muted) {
+      this.trackAudio.play().catch(() => {});
+    }
+  }
+
+  stopActivitySound() {
+    if (this.trackAudio) {
+      this.trackAudio.pause();
+      this.trackAudio.currentTime = 0;
+      this.trackAudio = null;
+    }
+    this.currentTrackUrl = null;
+  }
+
   ensureContext() {
     if (this.muted) return;
     if (!this.ctx) {
